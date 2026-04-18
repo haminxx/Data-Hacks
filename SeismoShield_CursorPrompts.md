@@ -337,29 +337,115 @@ Use useCallback and debounce for the API call on slider change.
 
 ---
 
-### 14. Seismic Heatmap
+### 14. 2.5D Building Map + Seismic Overlay (deck.gl + Google Maps)
 ```
 [CONTEXT BLOCK]
 
-Create components/SeismoMap.tsx — full screen interactive Mapbox heatmap.
+Create components/SeismoMap.tsx — a full-screen, 2.5D dark-mode map using
+the Google Maps JavaScript API with a deck.gl GoogleMapsOverlay. The map
+performs a cinematic flyTo from a wide view of San Diego down to the UCSD
+Rec Gym, then renders extruded 3D building footprints and the seismic
+hazard heatmap on top.
 
-Requirements:
-- Dark Mapbox map: style "mapbox://styles/mapbox/dark-v11"
-- Initial center: [-116.5, 33.5], zoom 7 (shows all of Southern California)
-- On load, fetch heatmap grid from POST /heatmap with magnitude 6.5, epicenter 33.19, -115.54
-- Render grid as Mapbox heatmap layer, colored by PGV:
-  * 0% → transparent
-  * 30% → #16A34A green
-  * 60% → #CA8A04 yellow
-  * 80% → #EA580C orange
-  * 100% → #DC2626 red
-- Animated pulsing marker at epicenter (Salton Sea) — red, 3 rings pulsing outward
-- Blue marker at Rec Gym with popup showing risk tier and PGV
-- Heatmap fades in with 1.5s opacity transition on load
-- Read token from process.env.NEXT_PUBLIC_MAPBOX_TOKEN
+## Dependencies
+Install:
+- @deck.gl/core
+- @deck.gl/layers
+- @deck.gl/google-maps
+- @googlemaps/js-api-loader
+
+## Environment
+- Read Google Maps key from process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY
+  (same key used on the exterior page Street View)
+- Create a dark-mode Map ID in Google Cloud Console and store as
+  process.env.NEXT_PUBLIC_GOOGLE_MAP_ID (Vector map required for tilt/heading)
+
+## Static Assets
+- Place UCSD building footprints GeoJSON at /public/ucsd_buildings.geojson
+  (Polygon / MultiPolygon features, each with a "name" property; Rec Gym
+  footprint must be included)
+
+## Camera State Management
+Use React useState to manage viewState of the deck.gl overlay.
+
+Initial State (San Diego Wide):
+  { longitude: -117.1611, latitude: 32.7157, zoom: 10, pitch: 45, bearing: 0 }
+
+Target State (UCSD Rec Gym):
+  { longitude: -117.2340, latitude: 32.8801, zoom: 16, pitch: 60, bearing: 30 }
+
+## FlyTo Animation
+- Import FlyToInterpolator from @deck.gl/core
+- On mount, wait 500ms, then setViewState to the Target State with
+  transitionDuration: 3000 and transitionInterpolator: new FlyToInterpolator()
+- Also expose a button "Analyze UCSD" (top-right overlay, dark pill style)
+  that re-triggers the flyTo for the demo
+- A second button "Reset View" snaps back to Initial State with a 2000ms
+  flyTo transition
+- Keep the Google base map and deck.gl WebGL layer perfectly in sync by
+  driving both from a single source of truth: update the google.maps.Map
+  camera via map.moveCamera({ center, zoom, tilt: pitch, heading: bearing })
+  inside the deck overlay's onViewStateChange handler
+
+## 2.5D Building Layer
+- Fetch /public/ucsd_buildings.geojson on mount
+- Render a deck.gl PolygonLayer with:
+  * id: "ucsd-buildings"
+  * data: feature.geometry.coordinates
+  * extruded: true
+  * getElevation: 20 (flat 20m for mock data; bump Rec Gym to 28m so it
+    stands out)
+  * getFillColor: [30, 41, 59, 180]  // semi-transparent dark slate
+  * getLineColor: [26, 86, 219, 255] // glowing blue #1A56DB border
+  * lineWidthMinPixels: 1.5
+  * material: { ambient: 0.4, diffuse: 0.6, shininess: 32 }
+  * pickable: true
+- On hover, highlight the building with a brighter border [59, 130, 246, 255]
+  and show a tooltip with feature.properties.name
+
+## Seismic Heatmap Overlay (deck.gl HeatmapLayer)
+- On mount, fetch POST /heatmap with { magnitude: 6.5, epicenter_lat: 33.19,
+  epicenter_lon: -115.54 } from lib/api.ts
+- Render a deck.gl HeatmapLayer above the Google base map but below the
+  PolygonLayer:
+  * id: "seismic-heatmap"
+  * data: points array from /heatmap response
+  * getPosition: d => [d.lon, d.lat]
+  * getWeight: d => d.pgv
+  * radiusPixels: 60
+  * intensity: 1
+  * threshold: 0.05
+  * colorRange: [
+      [22, 163, 74, 0],     // 0%   transparent green
+      [22, 163, 74, 140],   // 30%  #16A34A green
+      [202, 138, 4, 180],   // 60%  #CA8A04 yellow
+      [234, 88, 12, 210],   // 80%  #EA580C orange
+      [220, 38, 38, 240]    // 100% #DC2626 red
+    ]
+- Fade the heatmap in with a 1.5s opacity transition on first load
+
+## Markers
+- Animated pulsing ScatterplotLayer marker at the Salton Sea epicenter
+  (33.19, -115.54): red [220, 38, 38], 3 concentric rings expanding outward
+  every 1.2s using a useEffect radius animation
+- Solid blue IconLayer marker at Rec Gym (32.8786, -117.2364) — clicking
+  opens a deck.gl tooltip / small card with current risk tier and PGV
+  (consume from the /demo endpoint in lib/api.ts)
+
+## Code Requirements
+- Strictly typed TypeScript, modular (split viewState, layers, and the
+  Google Maps loader into small helpers inside the same file or co-located
+  hooks: useGoogleMap, useFlyTo, useSeismicData)
+- No desync between Google base map and deck.gl WebGL layer — always
+  drive the Google camera from the deck viewState, never the reverse
+- Client component only ("use client") — dynamic import from app/exterior
+  with ssr: false to avoid window references on the server
 - Export as default component
 
-Add this map to the exterior page below the Street View, in a collapsible "View Seismic Heatmap" section.
+## Integration
+Add the map to app/exterior/page.tsx below the Street View in a
+collapsible "View 2.5D Building & Seismic Map" section. When the section
+expands, the flyTo animation should play on first open.
 ```
 
 ---
