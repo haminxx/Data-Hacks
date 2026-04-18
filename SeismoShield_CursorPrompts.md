@@ -165,7 +165,7 @@ Add uvicorn runner at bottom: if __name__ == "__main__"
 
 ---
 
-## PERSON B — FRONTEND (YOU)
+## PERSON B — FRONTEND (RYAN)
 
 ### 7. Landing Page
 ```
