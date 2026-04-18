@@ -1,0 +1,10 @@
+{
+  "name": "SeismoShield",
+  "short_name": "SeismoShield",
+  "description": "Earthquake risk assessment PWA — add icons[] and scope/start_url as you build.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0F172A",
+  "theme_color": "#1A56DB",
+  "icons": []
+}
