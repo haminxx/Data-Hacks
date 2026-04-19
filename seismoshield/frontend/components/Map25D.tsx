@@ -64,46 +64,6 @@ const CAMPUS_VIEW: ViewState = {
   maxZoom: 19,
 };
 
-const PRICE_CENTER_VIEW: ViewState = {
-  longitude: -117.2366,
-  latitude: 32.8799,
-  zoom: 17.2,
-  pitch: 60,
-  bearing: 25,
-  minZoom: 13.5,
-  maxZoom: 19,
-};
-
-const GEISEL_VIEW: ViewState = {
-  longitude: -117.2374,
-  latitude: 32.8811,
-  zoom: 17.6,
-  pitch: 62,
-  bearing: -10,
-  minZoom: 13.5,
-  maxZoom: 19,
-};
-
-const RIMAC_VIEW: ViewState = {
-  longitude: -117.239,
-  latitude: 32.8866,
-  zoom: 17.2,
-  pitch: 60,
-  bearing: 30,
-  minZoom: 13.5,
-  maxZoom: 19,
-};
-
-const REC_GYM_VIEW: ViewState = {
-  longitude: -117.2365,
-  latitude: 32.8786,
-  zoom: 17.8,
-  pitch: 62,
-  bearing: 18,
-  minZoom: 13.5,
-  maxZoom: 19,
-};
-
 const HEIGHT_EXAGGERATION = 1.6;
 
 const CATEGORY_COLORS: Record<string, [number, number, number]> = {
@@ -230,19 +190,17 @@ export default function Map25D({
     };
   }, []);
 
-  const goTo = useCallback((target: ViewState) => {
-    setViewState({
-      ...target,
-      transitionDuration: 2200,
-      transitionInterpolator: new FlyToInterpolator({ speed: 1.6 }),
-    });
-  }, []);
-
-  // When the parent sets a new `selectedName` (e.g. via the search bar), fly
-  // the camera to that building so the user gets visual confirmation.
+  // When the parent sets a new `selectedName` (either via the search bar or
+  // by clicking a building on the map), fly the camera in close with a steep
+  // tilt so the building fills the frame. The parent uses this animation
+  // window to cross-fade into Street View.
   const lastFlownNameRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!selectedName || features.length === 0) return;
+    if (!selectedName) {
+      lastFlownNameRef.current = null;
+      return;
+    }
+    if (features.length === 0) return;
     if (lastFlownNameRef.current === selectedName) return;
     const hit = features.find((f) => f.properties.name === selectedName);
     if (!hit) return;
@@ -253,13 +211,13 @@ export default function Map25D({
       ...prev,
       longitude: clamp(lng, UCSD_BOUNDS.west, UCSD_BOUNDS.east),
       latitude: clamp(lat, UCSD_BOUNDS.south, UCSD_BOUNDS.north),
-      zoom: Math.max(prev.zoom, 17.2),
-      pitch: 58,
-      bearing: prev.bearing,
+      zoom: 18.2,
+      pitch: 62,
+      bearing: (prev.bearing + 18) % 360,
       minZoom: prev.minZoom,
       maxZoom: prev.maxZoom,
-      transitionDuration: 1800,
-      transitionInterpolator: new FlyToInterpolator({ speed: 1.8 }),
+      transitionDuration: 1700,
+      transitionInterpolator: new FlyToInterpolator({ speed: 1.9 }),
     }));
   }, [selectedName, features]);
 
@@ -362,10 +320,6 @@ export default function Map25D({
     return [basemap, buildings];
   }, [features, hoveredId, selectedId]);
 
-  const hoveredFeature = hoveredId
-    ? features.find((f) => f.properties.id === hoveredId)
-    : null;
-
   const clampView = useCallback((next: ViewState): ViewState => {
     return {
       ...next,
@@ -390,72 +344,9 @@ export default function Map25D({
         }
       />
 
-      <div className="pointer-events-none absolute left-4 top-4 z-10 max-w-xs rounded-xl border border-white/10 bg-black/60 p-4 text-white backdrop-blur">
-        <p className="text-xs uppercase tracking-[0.18em] text-white/55">
-          SeismoShield · UCSD Campus
-        </p>
-        <p className="mt-1 text-lg font-semibold text-white">
-          La Jolla Urban Model
-        </p>
-        <p className="mt-2 text-xs leading-relaxed text-white/75">
-          {features.length > 0
-            ? `${features.length.toLocaleString()} buildings extruded from OSM footprints, locked to the UCSD campus.`
-            : "Loading UCSD building footprints…"}
-          {" "}Click any building to open Street View 360°.
-        </p>
-        <div className="pointer-events-auto mt-3 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => goTo(CAMPUS_VIEW)}
-            className="rounded-full bg-[#1A56DB] px-3 py-1 text-xs font-semibold hover:bg-[#1647b3]"
-          >
-            Campus
-          </button>
-          <button
-            type="button"
-            onClick={() => goTo(PRICE_CENTER_VIEW)}
-            className="rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs font-semibold hover:bg-white/10"
-          >
-            Price Center
-          </button>
-          <button
-            type="button"
-            onClick={() => goTo(GEISEL_VIEW)}
-            className="rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs font-semibold hover:bg-white/10"
-          >
-            Geisel Library
-          </button>
-          <button
-            type="button"
-            onClick={() => goTo(RIMAC_VIEW)}
-            className="rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs font-semibold hover:bg-white/10"
-          >
-            RIMAC Arena
-          </button>
-          <button
-            type="button"
-            onClick={() => goTo(REC_GYM_VIEW)}
-            className="rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs font-semibold hover:bg-white/10"
-          >
-            Rec Gym
-          </button>
-        </div>
-      </div>
-
-      {hoveredFeature && (
-        <div className="pointer-events-none absolute right-4 top-4 z-10 rounded-lg border border-[#1A56DB]/50 bg-[#0F172A]/95 px-3 py-2 text-sm text-white shadow-lg backdrop-blur">
-          <p className="font-semibold text-[#93c5fd]">
-            {hoveredFeature.properties.name}
-          </p>
-          <p className="text-xs text-white/65">
-            {Math.round(hoveredFeature.properties.height)} m ·{" "}
-            {hoveredFeature.properties.category}
-          </p>
-          <p className="mt-0.5 text-[10px] uppercase tracking-[0.14em] text-white/40">
-            Click to view 360°
-          </p>
-        </div>
-      )}
+      {/* The top-left info card and the hover tooltip were intentionally
+          removed — /map has only the search bar and the map surface. The
+          loading + error badges below are still useful and sit top-right. */}
 
       {!ready && (
         <div className="pointer-events-none absolute right-4 top-4 z-10 flex items-center gap-2 rounded-full border border-white/10 bg-black/60 px-3 py-1.5 text-[11px] font-medium text-white/80 backdrop-blur">

@@ -6,6 +6,7 @@ import { Activity } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home" },
+  { href: "/risk-assessment", label: "Risk Assessment" },
   { href: "/simulator", label: "Simulator" },
   { href: "/emergency", label: "Emergency" },
 ] as const;
