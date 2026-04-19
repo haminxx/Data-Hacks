@@ -428,7 +428,7 @@ export default function RiskResultsPage() {
                 </ul>
               </div>
               <p className="relative mt-4 text-[11px] leading-relaxed text-white/40">
-                Share this SeismoShield summary with your insurance provider when
+                Share this Quarte summary with your insurance provider when
                 requesting a quote.
               </p>
               <button

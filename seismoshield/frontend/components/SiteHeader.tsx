@@ -47,7 +47,7 @@ export function SiteHeader() {
             <Activity className="h-4 w-4" />
           </span>
           <span className="text-base">
-            Seismo<span className="text-[#1A56DB]">Shield</span>
+            <span className="text-[#1A56DB]">Quarte</span>
           </span>
         </Link>
 

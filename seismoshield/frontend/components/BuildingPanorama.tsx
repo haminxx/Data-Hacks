@@ -70,7 +70,7 @@ export default function BuildingPanorama({
       </div>
 
       <footer className="border-t border-white/10 bg-[#0F172A]/80 px-4 py-2 text-[10px] uppercase tracking-[0.18em] text-white/40 backdrop-blur">
-        SeismoShield · 360° site capture · Drag to look around
+        Quarte · 360° site capture · Drag to look around
       </footer>
     </aside>
   );

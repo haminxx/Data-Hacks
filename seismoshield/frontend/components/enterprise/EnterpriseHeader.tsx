@@ -25,7 +25,7 @@ export function EnterpriseHeader({ center }: EnterpriseHeaderProps) {
           href="/enterprise/dashboard"
           className="shrink-0 text-sm font-semibold text-[#1A56DB] md:text-base"
         >
-          SeismoShield Enterprise
+          Quarte Enterprise
         </Link>
 
         {center != null && (

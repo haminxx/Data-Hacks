@@ -9,14 +9,14 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "SeismoShield",
+  title: "Quarte",
   description:
     "Earthquake risk assessment for buildings — demo: UCSD Recreation Center.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "SeismoShield",
+    title: "Quarte",
   },
 };
 

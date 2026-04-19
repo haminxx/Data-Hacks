@@ -47,7 +47,7 @@ export function AppNav() {
             S
           </span>
           <span className="hidden sm:inline">
-            Seismo<span className="text-[#1A56DB] group-hover:text-[#5b8def]">Shield</span>
+            <span className="text-[#1A56DB] group-hover:text-[#5b8def]">Quarte</span>
           </span>
         </Link>
 

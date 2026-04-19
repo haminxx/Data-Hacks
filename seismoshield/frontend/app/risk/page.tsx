@@ -159,7 +159,7 @@ export default function RiskAddressPage() {
                 This demo is scoped to one building
               </p>
               <p className="mt-2 text-sm text-white/55">
-                SeismoShield currently supports the HSS Building at UC San Diego.
+                Quarte currently supports the HSS Building at UC San Diego.
                 Broader Southern California coverage is planned for Q3 2026.
               </p>
               <button

@@ -16,3 +16,5 @@ public/fallback-*.js
 # Local dev server logs produced by ad-hoc smoke tests
 .next-dev*.log
 .next-dev*.err.log
+
+.next-build.log

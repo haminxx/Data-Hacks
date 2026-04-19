@@ -21,7 +21,7 @@ export default function SimulatorPage() {
 
       <div className="pointer-events-none absolute left-4 top-4 z-20 max-w-xs rounded-2xl border border-white/10 bg-black/55 p-4 text-white backdrop-blur">
         <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/55">
-          SeismoShield · Simulator
+          Quarte · Simulator
         </p>
         <p className="mt-1 text-lg font-semibold">360° Environment</p>
         <p className="mt-2 text-xs leading-relaxed text-white/70">

@@ -1,6 +1,6 @@
 {
-  "name": "SeismoShield",
-  "short_name": "SeismoShield",
+  "name": "Quarte",
+  "short_name": "Quarte",
   "description": "Earthquake risk assessment PWA — add icons[] and scope/start_url as you build.",
   "start_url": "/",
   "display": "standalone",

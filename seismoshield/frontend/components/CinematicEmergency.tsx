@@ -164,10 +164,6 @@ export interface CinematicEmergencyProps
   cardHeading?: string;
   cardDescription?: React.ReactNode;
   arHeading?: string;
-  arSubtitle?: string;
-  /** Background image for the AR act (equirectangular hallway w/ exit
-   *  sign). Positioned as the backdrop under the HUD overlays. */
-  arBackgroundUrl?: string;
 }
 
 /**
@@ -176,7 +172,7 @@ export interface CinematicEmergencyProps
  *   Act 1: iOS-style emergency alert banner floats in at the top of the
  *          viewport (mirrors the reference screenshot the user shared).
  *   Act 2: Deep card slides up and unfolds into a full-bleed hero with a
- *          phone mockup showing the SeismoShield "Drop · Cover · Hold On"
+ *          phone mockup showing the Quarte "Drop · Cover · Hold On"
  *          interface, orbiting floating-glass badges, and a timer ring.
  *   Act 3: The camera zooms INTO the phone's black screen, which opens
  *          into a live AR evacuation-guidance viewfinder with scan line,
@@ -191,8 +187,6 @@ export function CinematicEmergency({
     </>
   ),
   arHeading = "AR evacuation guidance",
-  arSubtitle = "Follow the markers to the nearest rally point. Green chevrons are safe egress. Red bands mark blocked routes.",
-  arBackgroundUrl = "/ar/exit-hallway.png",
   className,
   ...props
 }: CinematicEmergencyProps) {
@@ -512,9 +506,21 @@ export function CinematicEmergency({
               </p>
             </div>
           </div>
-          <p className="mt-8 text-center text-[11px] uppercase tracking-[0.28em] text-white/40">
-            Scroll to see the response
-          </p>
+          {/* Subtle grey chevron-down hinting the viewer to scroll. */}
+          <div className="mt-10 flex justify-center">
+            <svg
+              className="h-6 w-6 animate-bounce text-white/35"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </div>
         </div>
       </div>
 
@@ -529,8 +535,14 @@ export function CinematicEmergency({
         >
           <div className="ce-card-sheen" aria-hidden="true" />
 
-          <div className="relative z-10 mx-auto flex h-full w-full max-w-7xl flex-col items-center justify-evenly gap-4 px-4 py-6 lg:grid lg:grid-cols-[1fr_auto] lg:gap-16 lg:px-12 lg:py-0">
-            {/* RIGHT (desktop) / CENTER (mobile): iPhone mockup */}
+          {/* 3-column grid so the phone sits in the MIDDLE column
+              (viewport-centered) while the heading copy lives in the
+              LEFT column. Right column is an empty spacer that mirrors
+              the left column's width, keeping the mockup perfectly
+              centered regardless of text length. Mobile stacks to a
+              single flex column. */}
+          <div className="relative z-10 mx-auto flex h-full w-full max-w-7xl flex-col items-center justify-evenly gap-4 px-4 py-6 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:gap-12 lg:px-12 lg:py-0">
+            {/* CENTER (desktop + mobile): iPhone mockup */}
             <div
               className="ce-mockup-wrapper order-2 relative z-10 flex h-[380px] w-full items-center justify-center lg:order-2 lg:h-[600px]"
               style={{ perspective: "1000px" }}
@@ -754,35 +766,33 @@ export function CinematicEmergency({
                 {cardDescription}
               </p>
             </div>
+
+            {/* Right spacer column — invisible, exists only so the
+                phone mockup sits in the true middle column of the
+                grid on desktop. */}
+            <div
+              aria-hidden="true"
+              className="order-4 hidden lg:order-3 lg:block"
+            />
           </div>
         </div>
       </div>
 
       {/* ── ACT 3 — AR camera viewfinder ─────────────────────────── */}
       <div className="ce-ar-wrapper ce-gsap-reveal pointer-events-none absolute inset-0 z-30 overflow-hidden">
-        {/* Live camera feed: real hallway photo with an EXIT sign so the
-            AR chevrons have something believable to point at. Slight
-            saturation/contrast shift to sell the "through the camera"
-            read. */}
-        <div
-          className="absolute inset-0 bg-center bg-cover"
-          style={{
-            backgroundImage: `url(${arBackgroundUrl})`,
-            filter: "saturate(0.9) contrast(1.05)",
-          }}
-          aria-hidden="true"
-        />
-        {/* Dim vignette so the green HUD elements stay legible over the
-            photograph. */}
+        {/* Deep matte-black backdrop. We intentionally drop the hallway
+            photo here — the HUD, chevrons, radar, and telemetry tell the
+            AR story on their own and the bare background keeps the green
+            vectors crisp. */}
         <div
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse 100% 80% at 50% 55%, rgba(5,9,20,0.2) 0%, rgba(5,9,20,0.55) 70%, rgba(0,0,0,0.75) 100%)",
+              "radial-gradient(ellipse 90% 70% at 50% 55%, rgba(10,18,32,0.9) 0%, rgba(4,6,12,0.96) 60%, #000 100%)",
           }}
           aria-hidden="true"
         />
-        {/* Moving scan line on top of the feed */}
+        {/* Moving scan line */}
         <div
           className="ce-scanline pointer-events-none absolute inset-0"
           aria-hidden="true"
@@ -882,16 +892,14 @@ export function CinematicEmergency({
           </div>
         </div>
 
-        {/* Heading + subtitle. Positioned in the upper-center band so
-            they don't fight with the physical EXIT sign in the photo
-            (which the chevrons already point to). */}
-        <div className="ce-ar-hud ce-gsap-reveal absolute inset-x-0 top-[28%] flex flex-col items-center px-6 text-center">
-          <h2 className="rounded-xl bg-black/45 px-4 py-2 text-xl font-semibold tracking-tight text-white backdrop-blur-md md:text-2xl">
+        {/* AR heading. Sits near the top of the viewfinder (below the
+            "LIVE AR GUIDANCE" pill and radar), above the chevron stack
+            that points to the exit. No subtitle — the telemetry bar at
+            the bottom already explains the route. */}
+        <div className="ce-ar-hud ce-gsap-reveal absolute inset-x-0 top-24 flex flex-col items-center px-6 text-center md:top-28">
+          <h2 className="rounded-xl bg-black/45 px-4 py-2 text-2xl font-semibold tracking-tight text-white backdrop-blur-md md:text-3xl">
             {arHeading}
           </h2>
-          <p className="mt-3 hidden max-w-lg text-xs text-white/70 drop-shadow md:block md:text-sm">
-            {arSubtitle}
-          </p>
         </div>
       </div>
     </div>

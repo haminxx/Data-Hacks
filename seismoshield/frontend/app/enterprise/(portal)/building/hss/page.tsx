@@ -66,7 +66,7 @@ function vulnSource(name: string): string {
   if (name.includes("Construction")) return "Visual Assessment + Historical Records";
   if (name.includes("Height")) return "Building Survey";
   if (name.includes("Ceiling") || name.includes("Hazards"))
-    return "SeismoShield Photo Analysis — HSS 1345";
+    return "Quarte Photo Analysis — HSS 1345";
   return "—";
 }
 
@@ -258,7 +258,7 @@ export default function EnterpriseHSSPage() {
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-lg font-semibold">Interior Hazard Analysis</h2>
             <span className="rounded-full bg-[#1A56DB]/20 px-2 py-0.5 text-[11px] text-[#93c5fd]">
-              SeismoShield Photo Assessment
+              Quarte Photo Assessment
             </span>
           </div>
           <p className="mt-1 text-sm text-white/50">

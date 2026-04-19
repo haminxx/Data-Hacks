@@ -49,25 +49,12 @@ export default function HomePage() {
 
       {/* ── Hero card: Ruixen-style, tagline + small Demo on the left. The
            globe lives in the fixed container below and visually overflows
-           into the card's bottom-right corner.
-
-           On Demo click the hero card scales UP with transform-origin
-           anchored at the globe's visual center (bottom-right), so the
-           surrounding content appears to rush outward past the camera
-           while the globe itself stays static. This reads as "the
-           screen is diving into the globe" without ever moving the
-           planet. */}
-      <section
-        className="relative mx-auto flex min-h-screen max-w-7xl items-center px-6 pt-28 pb-16 md:px-12 md:pt-32"
-        style={{
-          transformOrigin: "calc(100% - 2rem) calc(100% - 2rem)",
-          transform: flying ? "scale(3)" : "scale(1)",
-          opacity: flying ? 0 : 1,
-          transition: `transform ${ROUTE_AT_MS}ms cubic-bezier(0.65, 0, 0.35, 1), opacity ${ROUTE_AT_MS}ms ease-in`,
-        }}
-      >
+           into the card's bottom-right corner. */}
+      <section className="relative mx-auto flex min-h-screen max-w-7xl items-center px-6 pt-28 pb-16 md:px-12 md:pt-32">
         <div
-          className="relative w-full overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#0b1224] via-[#080e1e] to-[#050814] px-8 py-14 shadow-[0_40px_120px_-40px_rgba(26,86,219,0.5)] md:px-16 md:py-20"
+          className={`relative w-full overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#0b1224] via-[#080e1e] to-[#050814] px-8 py-14 shadow-[0_40px_120px_-40px_rgba(26,86,219,0.5)] transition-opacity duration-500 md:px-16 md:py-20 ${
+            flying ? "opacity-0" : "opacity-100"
+          }`}
         >
           <div className="relative flex flex-col-reverse items-start justify-between gap-12 md:flex-row md:items-center">
             {/* LEFT — tagline + small Demo button */}
@@ -94,7 +81,7 @@ export default function HomePage() {
                 type="button"
                 onClick={handleLaunchDemo}
                 disabled={flying}
-                aria-label="Launch SeismoShield demo"
+                aria-label="Launch Quarte demo"
                 className="group mt-8 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-semibold text-[#050814] shadow-lg shadow-black/25 transition hover:bg-white/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-75"
               >
                 {flying ? "Flying to San Diego…" : "Demo"}
@@ -114,15 +101,30 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Globe container. Stays parked in the bottom-right corner
-           for the ENTIRE cinematic — per the "globe is static while
-           the screen moves into it" requirement. The globe rotates
-           (California → San Diego) inside its fixed frame; the zoom
-           feel is produced by the hero card scaling up past the
-           camera above. */}
+      {/* ── Globe container. Morphs from the parked bottom-right pose
+           (resting) to a full-screen centered pose (flying) so the
+           rotation-plus-zoom inside <Globe/> reads as a proper fly-by
+           diving toward San Diego. */}
       <div
-        className="pointer-events-none fixed right-[-14rem] bottom-[-10rem] z-30 h-[620px] w-[620px]"
-        style={{ transform: "scale(1.1)" }}
+        className="pointer-events-none fixed z-30 ease-[cubic-bezier(0.16,1,0.3,1)]"
+        style={{
+          transition: `left ${ROUTE_AT_MS}ms, top ${ROUTE_AT_MS}ms, right ${ROUTE_AT_MS}ms, bottom ${ROUTE_AT_MS}ms, width ${ROUTE_AT_MS}ms, height ${ROUTE_AT_MS}ms, transform ${ROUTE_AT_MS}ms`,
+          ...(flying
+            ? {
+                left: "50%",
+                top: "50%",
+                width: "120vmax",
+                height: "120vmax",
+                transform: "translate(-50%, -50%) scale(1)",
+              }
+            : {
+                right: "-14rem",
+                bottom: "-10rem",
+                width: "620px",
+                height: "620px",
+                transform: "scale(1.1)",
+              }),
+        }}
       >
         <div className="pointer-events-auto h-full w-full">
           <Globe ref={globeRef} className="h-full w-full" />

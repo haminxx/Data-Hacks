@@ -365,7 +365,7 @@ export default function Map25D({
       )}
 
       <div className="pointer-events-none absolute bottom-3 right-4 z-10 text-[10px] uppercase tracking-[0.15em] text-white/55">
-        © OpenStreetMap · CARTO · SeismoShield
+        © OpenStreetMap · CARTO · Quarte
       </div>
     </div>
   );

@@ -50,7 +50,7 @@ export default function EnterpriseLoginPage() {
         </div>
 
         <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-          Sign in to SeismoShield
+          Sign in to Quarte
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-white/60">
           Access the enterprise risk assessment console. Use your corporate
@@ -126,7 +126,7 @@ export default function EnterpriseLoginPage() {
           href="/"
           className="mt-8 block text-center text-sm text-white/45 transition hover:text-white/80"
         >
-          ← Back to SeismoShield
+          ← Back to Quarte
         </Link>
       </div>
     </div>
