@@ -6,18 +6,27 @@ import { Activity } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home" },
-  { href: "/risk-assessment", label: "Risk Assessment" },
+  { href: "/risk", label: "Risk Assessment" },
   { href: "/simulator", label: "Simulator" },
   { href: "/emergency", label: "Emergency" },
 ] as const;
 
 const HIDDEN_ROUTES = new Set<string>(["/map"]);
 
+function navItemActive(href: string, pathname: string): boolean {
+  if (href === "/risk") {
+    return pathname === "/risk" || pathname.startsWith("/risk/");
+  }
+  return pathname === href;
+}
+
 export function SiteHeader() {
   const pathname = usePathname() ?? "/";
   if (HIDDEN_ROUTES.has(pathname)) return null;
 
   const transparent = pathname === "/";
+  const riskRouteActive =
+    pathname === "/risk" || pathname.startsWith("/risk/");
 
   return (
     <header
@@ -27,10 +36,21 @@ export function SiteHeader() {
           : "border-b border-white/[0.06] bg-[#0B1220]/80 backdrop-blur-md"
       }`}
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 md:px-12">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-6 md:px-12">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+        <Link
+          href="/risk"
+          className={`hidden shrink-0 rounded-full border px-3 py-1 text-[12px] font-medium transition sm:inline-flex ${
+            riskRouteActive
+              ? "border-[#1A56DB]/45 bg-[#1A56DB]/12 text-[#bfdbfe] shadow-[0_0_20px_-8px_rgba(26,86,219,0.5)]"
+              : "border-slate-500/50 text-white/85 hover:border-slate-400 hover:bg-white/5"
+          }`}
+        >
+          Risk Assessment
+        </Link>
         <Link
           href="/"
-          className="group inline-flex items-center gap-2 text-sm font-semibold tracking-tight text-white"
+          className="group inline-flex min-w-0 items-center gap-2 text-sm font-semibold tracking-tight text-white"
         >
           <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#1A56DB]/40 bg-[#1A56DB]/15 text-[#93c5fd] transition group-hover:bg-[#1A56DB]/25">
             <Activity className="h-4 w-4" />
@@ -39,10 +59,11 @@ export function SiteHeader() {
             Seismo<span className="text-[#1A56DB]">Shield</span>
           </span>
         </Link>
+        </div>
 
         <nav className="hidden items-center gap-1 md:flex">
           {NAV_ITEMS.map((item) => {
-            const active = pathname === item.href;
+            const active = navItemActive(item.href, pathname);
             return (
               <Link
                 key={item.href}

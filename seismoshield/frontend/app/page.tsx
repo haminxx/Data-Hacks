@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -41,6 +42,13 @@ export default function HomePage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#050814] text-white">
+      <Link
+        href="/enterprise/login"
+        className="absolute right-4 top-20 z-[35] rounded-full border border-slate-500/50 px-3 py-1.5 text-[12px] font-medium text-white/90 transition hover:border-slate-400 hover:bg-white/5 md:right-8 md:top-24"
+      >
+        Enterprise Login →
+      </Link>
+
       {/* Ambient top glow so the dark page doesn't feel flat. */}
       <div
         aria-hidden

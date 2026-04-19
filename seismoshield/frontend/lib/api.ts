@@ -184,3 +184,82 @@ export async function getScenarios(): Promise<ScenariosResponse> {
     unwrapAxiosError(e);
   }
 }
+
+/** --- Risk assessment (HSS demo) --- */
+
+export interface RiskSubFactor {
+  name: string;
+  value: string;
+  score: number;
+  level: string;
+}
+
+export interface RiskCriterionBlock {
+  score: number;
+  weight: number;
+  sub_factors: RiskSubFactor[];
+}
+
+export interface RiskScoreResponse {
+  overall: number;
+  seismic_hazard: RiskCriterionBlock;
+  building_vulnerability: RiskCriterionBlock;
+  historical_record: RiskCriterionBlock;
+}
+
+export interface YearlyProjectionRow {
+  year: number;
+  annual_premium: number;
+  annual_expected_claims: number;
+  cumulative_premium: number;
+  cumulative_claims: number;
+  net_position: number;
+  worst_case: number;
+  p_m5_plus: number;
+  p_m6_plus: number;
+  p_m7_plus: number;
+}
+
+export interface InteriorHazardRow {
+  hazard: string;
+  location: string;
+  risk: string;
+  action: string;
+  cost: number;
+}
+
+export interface FinancialProjectionResponse {
+  building: string;
+  data_source: string;
+  events_analyzed: number;
+  years_of_data: number;
+  annual_rates: {
+    m4_plus: number;
+    m5_plus: number;
+    m6_plus: number;
+    m7_plus: number;
+  };
+  yearly_projections: YearlyProjectionRow[];
+  risk_scores: RiskScoreResponse;
+  interior_hazards: InteriorHazardRow[];
+  insurance_recommendation: {
+    tier: string;
+    policy_type: string;
+    minimum_coverage: number;
+    premium_multiplier: number;
+    annual_premium: number;
+    action_items: string[];
+  };
+}
+
+export async function getRiskScore(): Promise<RiskScoreResponse> {
+  const { data } = await client.get<RiskScoreResponse>("/risk-score");
+  return data;
+}
+
+export async function getFinancialProjection(): Promise<FinancialProjectionResponse> {
+  const { data } = await client.get<FinancialProjectionResponse>(
+    "/financial-projection",
+  );
+  return data;
+}

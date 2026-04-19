@@ -13,6 +13,7 @@ import joblib
 import numpy as np
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
 from model import (
@@ -22,6 +23,8 @@ from model import (
     feature_row_epicenter_to_site,
     pgv_to_risk_tier,
 )
+
+import risk_calculator as rc
 
 BACKEND_DIR = Path(__file__).resolve().parent
 MODEL_PATH = BACKEND_DIR / "seismoshield_model.joblib"
@@ -90,6 +93,24 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/", response_class=HTMLResponse)
+def api_root() -> str:
+    """Avoid a bare 404 when someone opens the API host in a browser."""
+    return """<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"/><title>SeismoShield API</title></head>
+<body style="font-family:system-ui,sans-serif;padding:2rem;max-width:36rem;line-height:1.5;background:#0f172a;color:#e2e8f0">
+  <h1 style="margin-top:0">SeismoShield API</h1>
+  <p>This port serves the <strong>backend</strong>. The web UI runs separately (usually Next.js on port <strong>3000</strong> or the port printed by <code>npm run dev</code>).</p>
+  <ul>
+    <li><a href="/docs" style="color:#60a5fa">Interactive API docs</a></li>
+    <li><a href="/financial-projection" style="color:#60a5fa">GET /financial-projection</a></li>
+    <li><a href="/risk-score" style="color:#60a5fa">GET /risk-score</a></li>
+  </ul>
+</body>
+</html>"""
 
 
 @app.get("/health")
@@ -176,6 +197,88 @@ def insurance(body: EarthquakeBody) -> dict[str, Any]:
 @app.get("/scenarios")
 def scenarios() -> list[dict[str, Any]]:
     return list(app.state.scenarios)
+
+
+@app.get("/financial-projection")
+def financial_projection() -> dict[str, Any]:
+    projections = rc.generate_projections()
+    risk_scores = rc.calculate_risk_score()
+
+    return {
+        "building": "HSS Room 1345, UCSD",
+        "data_source": "USGS Earthquake Hazards Program 2000-2023",
+        "events_analyzed": len(rc.nearby_df),
+        "years_of_data": rc.YEARS_OF_DATA,
+        "annual_rates": {
+            "m4_plus": round(rc.count_m4 / rc.YEARS_OF_DATA, 2),
+            "m5_plus": round(rc.count_m5 / rc.YEARS_OF_DATA, 2),
+            "m6_plus": round(rc.count_m6 / rc.YEARS_OF_DATA, 2),
+            "m7_plus": round(rc.count_m7 / rc.YEARS_OF_DATA, 2),
+        },
+        "yearly_projections": projections,
+        "risk_scores": risk_scores,
+        "interior_hazards": [
+            {
+                "hazard": "Ceiling projector",
+                "location": "Center ceiling",
+                "risk": "SEVERE",
+                "action": "Anchor to structural concrete",
+                "cost": 2400,
+            },
+            {
+                "hazard": "Water-damaged ceiling tile",
+                "location": "NW ceiling corner",
+                "risk": "HIGH",
+                "action": "Replace + inspect above",
+                "cost": 800,
+            },
+            {
+                "hazard": "Wall-mounted TV",
+                "location": "Blue wall",
+                "risk": "HIGH",
+                "action": "Add safety straps",
+                "cost": 150,
+            },
+            {
+                "hazard": "Projection screen bracket",
+                "location": "Wall bracket",
+                "risk": "HIGH",
+                "action": "Add secondary anchor",
+                "cost": 300,
+            },
+            {
+                "hazard": "HVAC unit",
+                "location": "Corner ceiling",
+                "risk": "MODERATE",
+                "action": "Secure mounting",
+                "cost": 500,
+            },
+            {
+                "hazard": "Mobile chairs and tables",
+                "location": "Throughout room",
+                "risk": "MODERATE",
+                "action": "Replace with fixed furniture",
+                "cost": 12000,
+            },
+        ],
+        "insurance_recommendation": {
+            "tier": "Tier 1 — Specialist Coverage Required",
+            "policy_type": "Earthquake Specialist Policy",
+            "minimum_coverage": 2_000_000,
+            "premium_multiplier": 2.5,
+            "annual_premium": 142_000,
+            "action_items": [
+                "Structural retrofit assessment required before renewal",
+                "Secure or remove ceiling-mounted projector immediately",
+                "Anchor all wall-mounted equipment to structural elements",
+            ],
+        },
+    }
+
+
+@app.get("/risk-score")
+def risk_score() -> dict[str, Any]:
+    return rc.calculate_risk_score()
 
 
 @app.get("/demo")
