@@ -212,10 +212,14 @@ export const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
           const startPhiOffset = phiOffsetRef.current;
           const startThetaOffset = thetaOffsetRef.current;
 
+          // Cobe's phi convention: a marker at longitude L sits at the front
+          // of the globe when phi ≡ L (in radians). San Diego / California are
+          // negative longitudes, so we target negative phi values. Flipping
+          // the sign here is the fix for the "fly-to lands in Asia" bug.
           const currentTotalPhi = phiRef.current + phiOffsetRef.current;
           const toCaliforniaDelta = shortestDelta(
             currentTotalPhi % (Math.PI * 2),
-            -CALIFORNIA_LON_RAD,
+            CALIFORNIA_LON_RAD,
           );
           const caliPhiOffset = startPhiOffset + toCaliforniaDelta;
           const caliThetaOffset = CALIFORNIA_LAT_RAD - BASE_THETA;
@@ -223,7 +227,7 @@ export const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
           const caliTotalPhi = phiRef.current + caliPhiOffset;
           const toSanDiegoDelta = shortestDelta(
             caliTotalPhi % (Math.PI * 2),
-            -SAN_DIEGO_LON_RAD,
+            SAN_DIEGO_LON_RAD,
           );
           const sdPhiOffset = caliPhiOffset + toSanDiegoDelta;
           const sdThetaOffset = SAN_DIEGO_LAT_RAD - BASE_THETA;

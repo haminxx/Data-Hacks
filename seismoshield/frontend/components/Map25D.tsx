@@ -53,11 +53,12 @@ const UCSD_BOUNDS = {
   north: 32.9,
 };
 
+// Default entry — zoomed OUT so the whole UCSD campus reads at a glance.
 const CAMPUS_VIEW: ViewState = {
-  longitude: -117.234,
-  latitude: 32.8801,
-  zoom: 15.2,
-  pitch: 55,
+  longitude: -117.2335,
+  latitude: 32.8815,
+  zoom: 14.2,
+  pitch: 48,
   bearing: 12,
   minZoom: 13.5,
   maxZoom: 19,
@@ -228,9 +229,11 @@ export default function Map25D({
 
   const layers = useMemo(() => {
     const basemap = new TileLayer({
-      id: "carto-voyager",
+      id: "carto-dark-matter",
+      // Dark Matter = graphic dark basemap with visible street grid + labels.
+      // Non-satellite, reads as a stylized map rather than imagery.
       data: [
-        "https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
+        "https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}@2x.png",
       ],
       minZoom: 0,
       maxZoom: 19,
@@ -261,8 +264,8 @@ export default function Map25D({
         selectedId === f.properties.id
           ? [255, 255, 255, 255]
           : hoveredId === f.properties.id
-            ? [226, 232, 240, 210]
-            : [30, 41, 59, 170],
+            ? [255, 255, 255, 230]
+            : [255, 255, 255, 55],
       lineWidthMinPixels: 0.6,
       material: {
         ambient: 0.35,
@@ -312,7 +315,7 @@ export default function Map25D({
   }, []);
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-[#e6ecf0]">
+    <div className="relative h-full w-full overflow-hidden bg-[#050814]">
       <DeckGL
         initialViewState={CAMPUS_VIEW}
         viewState={viewState}
@@ -410,7 +413,7 @@ export default function Map25D({
         </div>
       )}
 
-      <div className="pointer-events-none absolute bottom-3 right-4 z-10 text-[10px] uppercase tracking-[0.15em] text-slate-800/70">
+      <div className="pointer-events-none absolute bottom-3 right-4 z-10 text-[10px] uppercase tracking-[0.15em] text-white/55">
         © OpenStreetMap · CARTO · SeismoShield
       </div>
     </div>

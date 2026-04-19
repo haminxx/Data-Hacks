@@ -6,7 +6,6 @@ import { Activity } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home" },
-  { href: "/map", label: "3D Map" },
   { href: "/exterior", label: "Building" },
   { href: "/simulator", label: "Simulator" },
   { href: "/emergency", label: "Emergency" },
