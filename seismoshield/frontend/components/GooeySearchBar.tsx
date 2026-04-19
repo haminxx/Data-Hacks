@@ -27,30 +27,22 @@ interface GooeySearchBarProps<T extends SearchableItem> {
   className?: string;
 }
 
-/**
- * SVG goo filter definition. Rendered once inside the component tree; the
- * CSS filter URL references the id, so there must be exactly one instance
- * in the document. If two GooeySearchBars mount simultaneously the id stays
- * unique because SVG filter lookups don't care about duplicates.
- */
-function GooeyFilter() {
+/** Static search glyph shown when the bar is collapsed. */
+function CollapsedSearchGlyph() {
   return (
     <svg
       aria-hidden="true"
-      style={{ position: "absolute", width: 0, height: 0 }}
+      width="16"
+      height="16"
+      viewBox="0 0 15 15"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
     >
-      <defs>
-        <filter id="seismoshield-goo-effect">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />
-          <feColorMatrix
-            in="blur"
-            type="matrix"
-            values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -15"
-            result="goo"
-          />
-          <feComposite in="SourceGraphic" in2="goo" operator="atop" />
-        </filter>
-      </defs>
+      <path
+        d="M10 6.5C10 8.433 8.433 10 6.5 10C4.567 10 3 8.433 3 6.5C3 4.567 4.567 3 6.5 3C8.433 3 10 4.567 10 6.5ZM9.30884 10.0159C8.53901 10.6318 7.56251 11 6.5 11C4.01472 11 2 8.98528 2 6.5C2 4.01472 4.01472 2 6.5 2C8.98528 2 11 4.01472 11 6.5C11 7.56251 10.6318 8.53901 10.0159 9.30884L12.8536 12.1464C13.0488 12.3417 13.0488 12.6583 12.8536 12.8536C12.6583 13.0488 12.3417 13.0488 12.1464 12.8536L9.30884 10.0159Z"
+        fillRule="evenodd"
+        clipRule="evenodd"
+      />
     </svg>
   );
 }
@@ -203,15 +195,18 @@ function InfoIcon({
   );
 }
 
+// Keep the pill horizontally centered in its wrapper at all times —
+// step2 only grows the width, no translation, so the search glyph stays
+// exactly at center as the box expands.
 const buttonVariants: Variants = {
-  initial: { x: 0, width: 140 },
-  step1: { x: 0, width: 140 },
-  step2: { x: -30, width: 320 },
+  initial: { width: 56 },
+  step1: { width: 56 },
+  step2: { width: 360 },
 };
 
 const iconVariants: Variants = {
-  hidden: { x: -50, opacity: 0 },
-  visible: { x: 16, opacity: 1 },
+  hidden: { opacity: 0, scale: 0.6 },
+  visible: { opacity: 1, scale: 1 },
 };
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -273,7 +268,7 @@ export function GooeySearchBar<T extends SearchableItem>({
   onSelect,
   placeholder = "Search…",
   maxResults = 6,
-  collapsedLabel = "Search",
+  collapsedLabel,
   className,
 }: GooeySearchBarProps<T>) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -359,10 +354,8 @@ export function GooeySearchBar<T extends SearchableItem>({
   return (
     <div
       ref={wrapperRef}
-      className={clsx(styles.wrapper, isUnsupported && styles.noGoo, className)}
+      className={clsx(styles.wrapper, className)}
     >
-      <GooeyFilter />
-
       <div className={styles.buttonContent}>
         <motion.div
           className={styles.buttonContentInner}
@@ -431,9 +424,17 @@ export function GooeySearchBar<T extends SearchableItem>({
             whileTap={{ scale: 0.96 }}
             className={styles.searchBtn}
             role="button"
+            aria-label={step === 1 ? "Open search" : undefined}
           >
             {step === 1 ? (
-              <span className={styles.searchText}>{collapsedLabel}</span>
+              <span className={styles.searchGlyph}>
+                <CollapsedSearchGlyph />
+                {collapsedLabel ? (
+                  <span className={styles.searchGlyphLabel}>
+                    {collapsedLabel}
+                  </span>
+                ) : null}
+              </span>
             ) : (
               <input
                 ref={inputRef}

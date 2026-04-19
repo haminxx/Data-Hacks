@@ -55,17 +55,6 @@ export default function HomePage() {
             flying ? "opacity-90" : "opacity-100"
           }`}
         >
-          {/* Subtle fine grid backdrop */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 opacity-[0.05]"
-            style={{
-              backgroundImage:
-                "linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)",
-              backgroundSize: "44px 44px",
-            }}
-          />
-
           <div className="relative flex flex-col-reverse items-start justify-between gap-12 md:flex-row md:items-center">
             {/* LEFT — tagline + small Demo button */}
             <div

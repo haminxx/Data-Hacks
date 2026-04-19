@@ -139,8 +139,7 @@ export default function MapPage() {
           <GooeySearchBar<BuildingSearchItem>
             items={searchItems}
             onSelect={handleSearchPick}
-            collapsedLabel="Search UCSD"
-            placeholder="e.g. Geisel, Price Center, RIMAC…"
+            placeholder="Search buildings…"
             maxResults={6}
           />
         </div>
