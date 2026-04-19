@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { Globe, type GlobeHandle } from "@/components/Globe";
+import { SiteHeader } from "@/components/SiteHeader";
 
 const DEFAULT_ADDRESS = "9500 Gilman Dr, La Jolla, CA 92093";
 
@@ -67,8 +68,10 @@ export default function HomePage() {
         className="pointer-events-none absolute inset-x-0 top-0 h-[320px] bg-[radial-gradient(ellipse_at_top,rgba(26,86,219,0.25)_0%,rgba(15,23,42,0)_70%)]"
       />
 
+      <SiteHeader transparent />
+
       <section
-        className={`relative mx-auto flex min-h-screen max-w-7xl flex-col-reverse items-center justify-between gap-12 px-6 py-16 transition-opacity duration-500 md:flex-row md:px-12 md:py-24 ${
+        className={`relative mx-auto flex min-h-screen max-w-7xl flex-col-reverse items-center justify-between gap-12 px-6 pb-16 pt-28 transition-opacity duration-500 md:flex-row md:px-12 md:pb-24 md:pt-32 ${
           flying ? "opacity-[0.92]" : ""
         }`}
       >
@@ -153,10 +156,10 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="relative h-[320px] w-full max-w-xl md:h-[520px]">
+        <div className="relative flex w-full max-w-xl items-center justify-center">
           <Globe
             ref={globeRef}
-            className="absolute -bottom-24 -right-24 scale-125 md:-bottom-32 md:-right-40 md:scale-150"
+            className="w-full max-w-[520px]"
           />
         </div>
       </section>

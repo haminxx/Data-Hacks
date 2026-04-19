@@ -1,34 +1,12 @@
 "use client";
 
-import {
-  AmbientLight,
-  DirectionalLight,
-  FlyToInterpolator,
-  LightingEffect,
-} from "@deck.gl/core";
-import { TileLayer } from "@deck.gl/geo-layers";
-import { BitmapLayer, PolygonLayer } from "@deck.gl/layers";
+import { FlyToInterpolator } from "@deck.gl/core";
+import { Tile3DLayer } from "@deck.gl/geo-layers";
 import DeckGL from "@deck.gl/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { PickingInfo } from "@deck.gl/core";
+import { Tiles3DLoader } from "@loaders.gl/3d-tiles";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { StreetViewTarget } from "./StreetView";
-
-type SanGisFeature = {
-  type: "Feature";
-  properties: {
-    name: string;
-    height: number;
-    category?: string;
-  };
-  geometry: {
-    type: "Polygon";
-    coordinates: number[][][];
-  };
-};
-
-type SanGisCollection = {
-  type: "FeatureCollection";
-  features: SanGisFeature[];
-};
 
 type ViewState = {
   longitude: number;
@@ -43,79 +21,55 @@ type ViewState = {
 };
 
 const WIDE_SD_VIEW: ViewState = {
-  longitude: -117.08,
-  latitude: 32.87,
-  zoom: 9.3,
-  pitch: 35,
+  longitude: -117.13,
+  latitude: 32.82,
+  zoom: 11.2,
+  pitch: 55,
   bearing: 0,
   minZoom: 7,
-  maxZoom: 19,
+  maxZoom: 20,
 };
 
 const DOWNTOWN_VIEW: ViewState = {
   longitude: -117.161,
   latitude: 32.714,
-  zoom: 14.8,
-  pitch: 60,
-  bearing: 24,
+  zoom: 16.5,
+  pitch: 62,
+  bearing: 25,
   minZoom: 7,
-  maxZoom: 19,
+  maxZoom: 20,
 };
 
 const UCSD_VIEW: ViewState = {
   longitude: -117.2364,
   latitude: 32.8801,
-  zoom: 15.6,
+  zoom: 16.8,
   pitch: 60,
   bearing: 30,
   minZoom: 7,
-  maxZoom: 19,
+  maxZoom: 20,
 };
 
-const CATEGORY_COLORS: Record<string, [number, number, number]> = {
-  commercial: [96, 165, 250],
-  residential: [192, 132, 252],
-  hotel: [244, 114, 182],
-  civic: [250, 204, 21],
-  education: [74, 222, 128],
+const BALBOA_VIEW: ViewState = {
+  longitude: -117.1446,
+  latitude: 32.7341,
+  zoom: 16.2,
+  pitch: 60,
+  bearing: -15,
+  minZoom: 7,
+  maxZoom: 20,
 };
 
-const HEIGHT_EXAGGERATION = 3.2;
-
-function colorFor(
-  feature: SanGisFeature,
-  hovered: string | null,
-  selected: string | null,
-): [number, number, number, number] {
-  const base =
-    CATEGORY_COLORS[feature.properties.category ?? "commercial"] ?? [
-      96, 165, 250,
-    ];
-  const isHover = hovered === feature.properties.name;
-  const isSelected = selected === feature.properties.name;
-  const alpha = isSelected ? 255 : isHover ? 240 : 210;
-  const boost = isSelected ? 55 : isHover ? 30 : 0;
-  return [
-    Math.min(255, base[0] + boost),
-    Math.min(255, base[1] + boost),
-    Math.min(255, base[2] + boost),
-    alpha,
-  ];
+interface CreditAttribution {
+  html: string;
 }
 
-function polygonCentroid(ring: number[][]): [number, number] {
-  let sumLng = 0;
-  let sumLat = 0;
-  const uniq = ring.length > 1 &&
-    ring[0][0] === ring[ring.length - 1][0] &&
-    ring[0][1] === ring[ring.length - 1][1]
-    ? ring.slice(0, -1)
-    : ring;
-  for (const [lng, lat] of uniq) {
-    sumLng += lng;
-    sumLat += lat;
-  }
-  return [sumLng / uniq.length, sumLat / uniq.length];
+interface TilesetCredits {
+  attributions?: CreditAttribution[];
+}
+
+interface TilesetLike {
+  credits?: TilesetCredits;
 }
 
 interface Map25DProps {
@@ -123,143 +77,74 @@ interface Map25DProps {
   selectedName?: string | null;
 }
 
-export default function Map25D({
-  onBuildingSelect,
-  selectedName = null,
-}: Map25DProps) {
-  const [features, setFeatures] = useState<SanGisFeature[]>([]);
+export default function Map25D({ onBuildingSelect }: Map25DProps) {
   const [viewState, setViewState] = useState<ViewState>(WIDE_SD_VIEW);
-  const [hoverName, setHoverName] = useState<string | null>(null);
+  const [attribution, setAttribution] = useState<string>(
+    "© Google · Photorealistic 3D Tiles",
+  );
+  const [status, setStatus] = useState<
+    "loading" | "ready" | "missing-key" | "error"
+  >("loading");
   const onSelectRef = useRef(onBuildingSelect);
+  onSelectRef.current = onBuildingSelect;
 
-  useEffect(() => {
-    onSelectRef.current = onBuildingSelect;
-  }, [onBuildingSelect]);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/sangis_san_diego.geojson", { cache: "force-cache" })
-      .then((r) => r.json() as Promise<SanGisCollection>)
-      .then((gj) => {
-        if (!cancelled) setFeatures(gj.features ?? []);
-      })
-      .catch(() => {
-        if (!cancelled) setFeatures([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY;
 
   const goTo = useCallback((target: ViewState) => {
     setViewState({
       ...target,
-      transitionDuration: 2200,
-      transitionInterpolator: new FlyToInterpolator({ speed: 1.8 }),
+      transitionDuration: 2400,
+      transitionInterpolator: new FlyToInterpolator({ speed: 1.6 }),
     });
-  }, []);
-
-  const lightingEffect = useMemo(() => {
-    const ambient = new AmbientLight({
-      color: [255, 255, 255],
-      intensity: 1.2,
-    });
-    const sun = new DirectionalLight({
-      color: [255, 245, 225],
-      intensity: 2.6,
-      direction: [-3, -9, -3],
-    });
-    const fill = new DirectionalLight({
-      color: [160, 180, 255],
-      intensity: 1.1,
-      direction: [4, -2, -5],
-    });
-    return new LightingEffect({ ambient, sun, fill });
   }, []);
 
   const layers = useMemo(() => {
-    const basemap = new TileLayer({
-      id: "carto-dark-tiles",
-      data: "https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png",
-      minZoom: 0,
-      maxZoom: 19,
-      tileSize: 256,
-      renderSubLayers: (props) => {
-        const tile = props.tile as unknown as {
-          boundingBox: [[number, number], [number, number]];
-        };
-        const [[west, south], [east, north]] = tile.boundingBox;
-        return new BitmapLayer(props, {
-          id: `${props.id}-bitmap`,
-          data: undefined,
-          image: props.data as string,
-          bounds: [west, south, east, north],
-        });
-      },
+    if (!apiKey) return [];
+    return [
+      new Tile3DLayer({
+        id: "google-photoreal-3d-tiles",
+        data: `https://tile.googleapis.com/v1/3dtiles/root.json?key=${apiKey}`,
+        loader: Tiles3DLoader,
+        loadOptions: {
+          fetch: { mode: "cors" as const },
+        },
+        pickable: true,
+        onTilesetLoad: (tileset: TilesetLike) => {
+          setStatus("ready");
+          const credits = tileset?.credits?.attributions
+            ?.map((a) => a.html)
+            .join(" · ");
+          if (credits && credits.length > 0) {
+            setAttribution(credits);
+          }
+        },
+        onTileError: (_tile: unknown, _url: string, message: string) => {
+          console.error("[Tile3DLayer] tile error:", message);
+          setStatus("error");
+        },
+      }),
+    ];
+  }, [apiKey]);
+
+  const onClickMap = useCallback((info: PickingInfo) => {
+    if (!info || !info.coordinate) return;
+    const [lng, lat] = info.coordinate as [number, number, number?];
+    onSelectRef.current?.({
+      name: "Selected location",
+      lng,
+      lat,
     });
-
-    const buildings = new PolygonLayer<SanGisFeature>({
-      id: "sangis-buildings",
-      data: features,
-      extruded: true,
-      wireframe: false,
-      getPolygon: (f) => f.geometry.coordinates[0] as unknown as number[][],
-      getElevation: (f) => f.properties.height * HEIGHT_EXAGGERATION,
-      getFillColor: (f) => colorFor(f, hoverName, selectedName),
-      getLineColor: (f) =>
-        selectedName === f.properties.name
-          ? [255, 255, 255, 255]
-          : hoverName === f.properties.name
-            ? [219, 234, 254, 240]
-            : [26, 86, 219, 150],
-      lineWidthMinPixels: 1.2,
-      material: {
-        ambient: 0.35,
-        diffuse: 0.85,
-        shininess: 64,
-        specularColor: [120, 160, 220],
-      },
-      pickable: true,
-      autoHighlight: true,
-      highlightColor: [255, 255, 255, 90],
-      onHover: (info) => {
-        setHoverName(info.object ? info.object.properties.name : null);
-      },
-      onClick: (info) => {
-        if (!info.object) return;
-        const feature = info.object as SanGisFeature;
-        const ring = feature.geometry.coordinates[0] as unknown as number[][];
-        const [lng, lat] = polygonCentroid(ring);
-        onSelectRef.current?.({
-          name: feature.properties.name,
-          height: feature.properties.height,
-          category: feature.properties.category,
-          lng,
-          lat,
-        });
-      },
-      updateTriggers: {
-        getFillColor: [hoverName, selectedName],
-        getLineColor: [hoverName, selectedName],
-      },
-    });
-
-    return [basemap, buildings];
-  }, [features, hoverName, selectedName]);
-
-  const hoveredFeature = hoverName
-    ? features.find((f) => f.properties.name === hoverName)
-    : null;
+  }, []);
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-[#0F172A]">
+    <div className="relative h-full w-full overflow-hidden bg-[#0B1324]">
       <DeckGL
         initialViewState={WIDE_SD_VIEW}
         viewState={viewState}
         controller={{ dragRotate: true, inertia: 500 }}
         onViewStateChange={(evt) => setViewState(evt.viewState as ViewState)}
         layers={layers}
-        effects={[lightingEffect]}
+        onClick={onClickMap}
         getCursor={({ isDragging, isHovering }) =>
           isDragging ? "grabbing" : isHovering ? "pointer" : "grab"
         }
@@ -267,15 +152,15 @@ export default function Map25D({
 
       <div className="pointer-events-none absolute left-4 top-4 z-10 max-w-xs rounded-xl border border-white/10 bg-black/60 p-4 text-white backdrop-blur">
         <p className="text-xs uppercase tracking-[0.18em] text-white/50">
-          SeismoShield · 2.5D Map
+          SeismoShield · Photorealistic 3D
         </p>
         <p className="mt-1 text-lg font-semibold text-white">
           San Diego Urban Model
         </p>
         <p className="mt-2 text-xs leading-relaxed text-white/70">
-          Click a building to open Google Street View 360°. Drag to pan, scroll
-          to zoom, hold <kbd className="rounded bg-white/10 px-1">Ctrl</kbd> +
-          drag to tilt & rotate.
+          Real 3D buildings streamed from Google Maps Platform Photorealistic 3D
+          Tiles. Click any building to open Street View 360°. Hold{" "}
+          <kbd className="rounded bg-white/10 px-1">Ctrl</kbd> + drag to tilt.
         </p>
         <div className="pointer-events-auto mt-3 flex flex-wrap gap-2">
           <button
@@ -299,27 +184,56 @@ export default function Map25D({
           >
             UCSD Campus
           </button>
+          <button
+            type="button"
+            onClick={() => goTo(BALBOA_VIEW)}
+            className="rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs font-semibold hover:bg-white/10"
+          >
+            Balboa Park
+          </button>
         </div>
       </div>
 
-      {hoveredFeature && (
-        <div className="pointer-events-none absolute right-4 top-4 z-10 rounded-lg border border-[#1A56DB]/50 bg-[#0F172A]/95 px-3 py-2 text-sm text-white shadow-lg backdrop-blur">
-          <p className="font-semibold text-[#93c5fd]">
-            {hoveredFeature.properties.name}
-          </p>
-          <p className="text-xs text-white/60">
-            {hoveredFeature.properties.height} m ·{" "}
-            {hoveredFeature.properties.category ?? "building"}
-          </p>
-          <p className="mt-0.5 text-[10px] uppercase tracking-[0.14em] text-white/40">
-            Click to view 360°
-          </p>
+      {!apiKey && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center p-6">
+          <div className="max-w-md rounded-xl border border-white/10 bg-black/70 p-6 text-center backdrop-blur">
+            <p className="text-base font-semibold text-white">
+              Google Maps API key missing
+            </p>
+            <p className="mt-2 text-xs leading-relaxed text-white/65">
+              Add{" "}
+              <code className="rounded bg-white/10 px-1">
+                NEXT_PUBLIC_GOOGLE_MAPS_KEY
+              </code>{" "}
+              to{" "}
+              <code className="rounded bg-white/10 px-1">.env.local</code> and
+              enable the <strong>Map Tiles API</strong> in Google Cloud.
+            </p>
+          </div>
         </div>
       )}
 
-      <div className="pointer-events-none absolute bottom-3 right-4 z-10 text-[10px] uppercase tracking-[0.15em] text-white/40">
-        © OpenStreetMap · CARTO · SanGIS
-      </div>
+      {apiKey && status === "loading" && (
+        <div className="pointer-events-none absolute right-4 top-4 z-10 flex items-center gap-2 rounded-full border border-white/10 bg-black/60 px-3 py-1.5 text-[11px] font-medium text-white/75 backdrop-blur">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#1A56DB]/70" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-[#1A56DB]" />
+          </span>
+          Streaming Google 3D Tiles…
+        </div>
+      )}
+
+      {apiKey && status === "error" && (
+        <div className="pointer-events-none absolute right-4 top-4 z-10 max-w-xs rounded-lg border border-amber-500/40 bg-amber-900/40 px-3 py-2 text-[11px] text-amber-100 backdrop-blur">
+          Some tiles failed. Verify the <strong>Map Tiles API</strong> and
+          billing are enabled for this key.
+        </div>
+      )}
+
+      <div
+        className="pointer-events-none absolute bottom-3 left-1/2 z-10 max-w-[80%] -translate-x-1/2 truncate rounded bg-black/55 px-3 py-1 text-[10px] text-white/75 backdrop-blur"
+        dangerouslySetInnerHTML={{ __html: attribution }}
+      />
     </div>
   );
 }

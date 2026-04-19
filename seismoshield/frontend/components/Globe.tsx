@@ -1,6 +1,6 @@
 "use client";
 
-import createGlobe, { type COBEOptions } from "cobe";
+import createGlobe from "cobe";
 import {
   forwardRef,
   useCallback,
@@ -14,41 +14,37 @@ export type GlobeHandle = {
   reset: () => void;
 };
 
-const GLOBE_CONFIG: COBEOptions = {
-  width: 800,
-  height: 800,
-  onRender: () => {},
-  devicePixelRatio: 2,
-  phi: 0,
-  theta: 0.28,
-  dark: 1,
-  diffuse: 1.1,
-  mapSamples: 16000,
-  mapBrightness: 5.5,
-  baseColor: [0.18, 0.22, 0.38],
-  markerColor: [251 / 255, 100 / 255, 21 / 255],
-  glowColor: [0.1, 0.34, 0.86],
-  markers: [
-    { location: [32.7157, -117.1611], size: 0.12 },
-    { location: [33.19, -115.54], size: 0.08 },
-    { location: [35.6762, 139.6503], size: 0.07 },
-    { location: [61.2181, -149.9003], size: 0.06 },
-    { location: [-41.2865, 174.7762], size: 0.06 },
-    { location: [-33.4489, -70.6693], size: 0.07 },
-    { location: [41.0082, 28.9784], size: 0.06 },
-    { location: [27.7172, 85.324], size: 0.06 },
-    { location: [14.5995, 120.9842], size: 0.05 },
-    { location: [19.4326, -99.1332], size: 0.06 },
-  ],
+type PulseMarker = {
+  id: string;
+  location: [number, number];
+  size: number;
+  delay?: number;
+  big?: boolean;
+  label?: string;
 };
 
-const AUTO_PHI_SPEED = 0.0018;
-const SAN_DIEGO_LAT = 32.7157;
-const SAN_DIEGO_LON = -117.1611;
+const MARKERS: PulseMarker[] = [
+  {
+    id: "san-diego",
+    location: [32.7157, -117.1611],
+    size: 0.1,
+    delay: 0,
+    big: true,
+    label: "San Diego",
+  },
+  { id: "tokyo", location: [35.6762, 139.6503], size: 0.03, delay: 0.7 },
+  { id: "sydney", location: [-33.8688, 151.2093], size: 0.03, delay: 1.2 },
+  { id: "london", location: [51.5074, -0.1278], size: 0.03, delay: 0.3 },
+  { id: "mexico-city", location: [19.4326, -99.1332], size: 0.03, delay: 1.8 },
+];
+
+const SAN_DIEGO_LAT_RAD = (32.7157 * Math.PI) / 180;
+const SAN_DIEGO_LON_RAD = (-117.1611 * Math.PI) / 180;
+const BASE_THETA = 0.28;
 
 interface GlobeProps {
   className?: string;
-  config?: COBEOptions;
+  speed?: number;
   onFlyComplete?: () => void;
 }
 
@@ -56,10 +52,6 @@ function easeInOutCubic(t: number): number {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
-/**
- * Normalise an angle delta into the [-PI, PI] range so that a flyTo
- * animation always rotates along the shortest arc.
- */
 function shortestDelta(from: number, to: number): number {
   let d = (to - from) % (Math.PI * 2);
   if (d > Math.PI) d -= Math.PI * 2;
@@ -68,111 +60,125 @@ function shortestDelta(from: number, to: number): number {
 }
 
 export const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
-  { className, config = GLOBE_CONFIG, onFlyComplete },
+  { className, speed = 0.0025, onFlyComplete },
   ref,
 ) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const phiRef = useRef<number>(0);
-  const thetaRef = useRef<number>(config.theta ?? 0.28);
-  const widthRef = useRef<number>(0);
-
-  const pointerStartX = useRef<number | null>(null);
-  const lastPointerX = useRef<number | null>(null);
-  const dragVelocity = useRef<number>(0);
-  const isDragging = useRef<boolean>(false);
-  const dragOffset = useRef<number>(0);
-
-  const autoPausedRef = useRef<boolean>(false);
+  const pointerInteracting = useRef<{ x: number; y: number } | null>(null);
+  const dragOffsetRef = useRef<{ phi: number; theta: number }>({
+    phi: 0,
+    theta: 0,
+  });
+  const phiOffsetRef = useRef<number>(0);
+  const thetaOffsetRef = useRef<number>(0);
+  const isPausedRef = useRef<boolean>(false);
   const flyingRef = useRef<boolean>(false);
+  const phiRef = useRef<number>(0);
+
   const onFlyCompleteRef = useRef<typeof onFlyComplete>(onFlyComplete);
   onFlyCompleteRef.current = onFlyComplete;
 
-  const setCursor = (cursor: "grab" | "grabbing") => {
-    if (canvasRef.current) canvasRef.current.style.cursor = cursor;
-  };
-
-  const onPointerDown = (clientX: number) => {
-    isDragging.current = true;
-    pointerStartX.current = clientX;
-    lastPointerX.current = clientX;
-    dragVelocity.current = 0;
-    dragOffset.current = 0;
-    autoPausedRef.current = true;
-    setCursor("grabbing");
-  };
-
-  const onPointerMove = (clientX: number) => {
-    if (!isDragging.current || lastPointerX.current === null) return;
-    const instantDelta = clientX - lastPointerX.current;
-    lastPointerX.current = clientX;
-    dragVelocity.current = instantDelta;
-    dragOffset.current += instantDelta / 220;
-  };
-
-  const onPointerUp = () => {
-    if (!isDragging.current) return;
-    isDragging.current = false;
-    pointerStartX.current = null;
-    lastPointerX.current = null;
-    setCursor("grab");
-  };
-
-  const onRender = useCallback((state: Record<string, number>) => {
-    if (flyingRef.current) {
-      state.phi = phiRef.current;
-      state.theta = thetaRef.current;
-    } else {
-      if (isDragging.current) {
-        phiRef.current += dragOffset.current * 0.12;
-        dragOffset.current *= 0.88;
-      } else if (autoPausedRef.current) {
-        if (Math.abs(dragVelocity.current) > 0.02) {
-          phiRef.current += (dragVelocity.current / 220) * 0.12;
-          dragVelocity.current *= 0.94;
-        } else {
-          dragVelocity.current = 0;
-          autoPausedRef.current = false;
-        }
-      } else {
-        phiRef.current += AUTO_PHI_SPEED;
-      }
-      state.phi = phiRef.current;
-      state.theta = thetaRef.current;
-    }
-    state.width = widthRef.current * 2;
-    state.height = widthRef.current * 2;
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    if (flyingRef.current) return;
+    (e.currentTarget as HTMLCanvasElement).setPointerCapture(e.pointerId);
+    pointerInteracting.current = { x: e.clientX, y: e.clientY };
+    if (canvasRef.current) canvasRef.current.style.cursor = "grabbing";
+    isPausedRef.current = true;
   }, []);
+
+  const handlePointerUp = useCallback(() => {
+    if (pointerInteracting.current !== null) {
+      phiOffsetRef.current += dragOffsetRef.current.phi;
+      thetaOffsetRef.current += dragOffsetRef.current.theta;
+      dragOffsetRef.current = { phi: 0, theta: 0 };
+    }
+    pointerInteracting.current = null;
+    if (canvasRef.current) canvasRef.current.style.cursor = "grab";
+    if (!flyingRef.current) isPausedRef.current = false;
+  }, []);
+
+  useEffect(() => {
+    const handlePointerMove = (e: PointerEvent) => {
+      if (pointerInteracting.current !== null) {
+        dragOffsetRef.current = {
+          phi: (e.clientX - pointerInteracting.current.x) / 300,
+          theta: (e.clientY - pointerInteracting.current.y) / 1000,
+        };
+      }
+    };
+    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    window.addEventListener("pointerup", handlePointerUp, { passive: true });
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+  }, [handlePointerUp]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const onResize = () => {
-      if (canvas) widthRef.current = canvas.offsetWidth;
+    let globe: ReturnType<typeof createGlobe> | null = null;
+
+    const init = () => {
+      const width = canvas.offsetWidth;
+      if (width === 0 || globe) return;
+
+      globe = createGlobe(canvas, {
+        devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2),
+        width: width * 2,
+        height: width * 2,
+        phi: 0,
+        theta: BASE_THETA,
+        dark: 1,
+        diffuse: 1.4,
+        mapSamples: 16000,
+        mapBrightness: 7,
+        baseColor: [0.25, 0.3, 0.45],
+        markerColor: [51 / 255, 204 / 255, 221 / 255],
+        glowColor: [0.08, 0.28, 0.7],
+        markers: MARKERS.map((m) => ({
+          location: m.location,
+          size: m.size,
+        })),
+        onRender: (state: Record<string, number>) => {
+          if (!flyingRef.current && !isPausedRef.current) {
+            phiRef.current += speed;
+          }
+          state.phi =
+            phiRef.current +
+            phiOffsetRef.current +
+            dragOffsetRef.current.phi;
+          state.theta =
+            BASE_THETA + thetaOffsetRef.current + dragOffsetRef.current.theta;
+          state.width = width * 2;
+          state.height = width * 2;
+        },
+      });
+
+      window.setTimeout(() => {
+        if (canvas) canvas.style.opacity = "1";
+      }, 0);
     };
 
-    window.addEventListener("resize", onResize);
-    onResize();
-
-    const globe = createGlobe(canvas, {
-      ...config,
-      width: widthRef.current * 2,
-      height: widthRef.current * 2,
-      onRender,
-    });
-
-    const fadeIn = window.setTimeout(() => {
-      if (canvas) canvas.style.opacity = "1";
-    }, 0);
+    if (canvas.offsetWidth > 0) {
+      init();
+    } else {
+      const ro = new ResizeObserver((entries) => {
+        if (entries[0]?.contentRect.width && entries[0].contentRect.width > 0) {
+          ro.disconnect();
+          init();
+        }
+      });
+      ro.observe(canvas);
+    }
 
     return () => {
-      window.removeEventListener("resize", onResize);
-      window.clearTimeout(fadeIn);
-      globe.destroy();
+      if (globe) globe.destroy();
     };
-  }, [config, onRender]);
+  }, [speed]);
 
   useImperativeHandle(
     ref,
@@ -184,17 +190,22 @@ export const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
             return;
           }
           flyingRef.current = true;
-          autoPausedRef.current = true;
+          isPausedRef.current = true;
 
-          const startPhi = phiRef.current;
-          const startTheta = thetaRef.current;
+          phiOffsetRef.current += dragOffsetRef.current.phi;
+          thetaOffsetRef.current += dragOffsetRef.current.theta;
+          dragOffsetRef.current = { phi: 0, theta: 0 };
 
-          const targetPhi =
-            phiRef.current + shortestDelta(
-              phiRef.current % (Math.PI * 2),
-              -((SAN_DIEGO_LON * Math.PI) / 180),
-            );
-          const targetTheta = (SAN_DIEGO_LAT * Math.PI) / 180;
+          const currentTotal = phiRef.current + phiOffsetRef.current;
+          const delta = shortestDelta(
+            currentTotal % (Math.PI * 2),
+            -SAN_DIEGO_LON_RAD,
+          );
+          const startPhiOffset = phiOffsetRef.current;
+          const endPhiOffset = startPhiOffset + delta;
+
+          const startThetaOffset = thetaOffsetRef.current;
+          const endThetaOffset = SAN_DIEGO_LAT_RAD - BASE_THETA;
 
           const el = containerRef.current;
           if (el) {
@@ -209,8 +220,10 @@ export const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
           const step = (now: number) => {
             const t = Math.min(1, (now - start) / duration);
             const e = easeInOutCubic(t);
-            phiRef.current = startPhi + (targetPhi - startPhi) * e;
-            thetaRef.current = startTheta + (targetTheta - startTheta) * e;
+            phiOffsetRef.current =
+              startPhiOffset + (endPhiOffset - startPhiOffset) * e;
+            thetaOffsetRef.current =
+              startThetaOffset + (endThetaOffset - startThetaOffset) * e;
             if (t < 1) {
               requestAnimationFrame(step);
             } else {
@@ -224,15 +237,15 @@ export const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
       reset: () => {
         const el = containerRef.current;
         if (el) {
-          el.style.transition =
-            "transform 900ms ease, filter 900ms ease";
+          el.style.transition = "transform 900ms ease, filter 900ms ease";
           el.style.transform = "";
           el.style.filter = "";
         }
         flyingRef.current = false;
-        autoPausedRef.current = false;
-        dragVelocity.current = 0;
-        dragOffset.current = 0;
+        isPausedRef.current = false;
+        phiOffsetRef.current = 0;
+        thetaOffsetRef.current = 0;
+        dragOffsetRef.current = { phi: 0, theta: 0 };
       },
     }),
     [],
@@ -241,25 +254,106 @@ export const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
   return (
     <div
       ref={containerRef}
-      className={`absolute inset-0 mx-auto aspect-square w-full max-w-[640px] transition-transform duration-700 ease-out ${className ?? ""}`}
+      className={`relative aspect-square select-none transition-transform duration-700 ease-out ${className ?? ""}`}
     >
+      <style>{`
+        @keyframes pulse-expand {
+          0% { transform: scale(0.3); opacity: 0.85; }
+          100% { transform: scale(1.9); opacity: 0; }
+        }
+        @keyframes pulse-expand-big {
+          0% { transform: scale(0.35); opacity: 1; }
+          100% { transform: scale(2.6); opacity: 0; }
+        }
+      `}</style>
       <canvas
         ref={canvasRef}
-        className="size-full cursor-grab opacity-0 transition-opacity duration-700 [contain:layout_paint_size]"
-        onPointerDown={(e) => {
-          (e.currentTarget as HTMLCanvasElement).setPointerCapture(
-            e.pointerId,
-          );
-          onPointerDown(e.clientX);
-        }}
-        onPointerMove={(e) => onPointerMove(e.clientX)}
-        onPointerUp={() => onPointerUp()}
-        onPointerCancel={() => onPointerUp()}
-        onPointerLeave={() => onPointerUp()}
-        onTouchMove={(e) => {
-          if (e.touches[0]) onPointerMove(e.touches[0].clientX);
+        onPointerDown={handlePointerDown}
+        style={{
+          width: "100%",
+          height: "100%",
+          cursor: "grab",
+          opacity: 0,
+          transition: "opacity 1.2s ease",
+          borderRadius: "50%",
+          touchAction: "none",
         }}
       />
+      {MARKERS.map((m) => {
+        const ringCount = m.big ? 3 : 2;
+        const coreSize = m.big ? 14 : 8;
+        const ringColor = m.big ? "#33ccdd" : "#67e8f9";
+        const frameSize = m.big ? 60 : 32;
+        const markerStyle: React.CSSProperties = {
+          position: "absolute",
+          positionAnchor: `--cobe-${m.id}`,
+          bottom: "anchor(center)",
+          left: "anchor(center)",
+          translate: "-50% 50%",
+          width: frameSize,
+          height: frameSize,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          pointerEvents: "none",
+          opacity: `var(--cobe-visible-${m.id}, 0)` as unknown as number,
+          filter: `blur(calc((1 - var(--cobe-visible-${m.id}, 0)) * 6px))`,
+          transition: "opacity 0.4s, filter 0.4s",
+        };
+        return (
+          <div key={m.id} style={markerStyle}>
+            {Array.from({ length: ringCount }).map((_, i) => (
+              <span
+                key={i}
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  border: `2px solid ${ringColor}`,
+                  borderRadius: "50%",
+                  opacity: 0,
+                  animation: `${
+                    m.big ? "pulse-expand-big" : "pulse-expand"
+                  } 2.2s ease-out infinite ${(m.delay ?? 0) + i * 0.55}s`,
+                }}
+              />
+            ))}
+            <span
+              style={{
+                width: coreSize,
+                height: coreSize,
+                background: ringColor,
+                borderRadius: "50%",
+                boxShadow: m.big
+                  ? "0 0 0 3px #0F172A, 0 0 0 6px rgba(51,204,221,0.75), 0 0 20px rgba(51,204,221,0.7)"
+                  : "0 0 0 2px #0F172A, 0 0 0 4px rgba(103,232,249,0.55)",
+              }}
+            />
+            {m.big && m.label && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: "calc(50% + 22px)",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  padding: "2px 8px",
+                  background: "rgba(15, 23, 42, 0.85)",
+                  border: "1px solid rgba(51, 204, 221, 0.4)",
+                  borderRadius: 9999,
+                  color: "#e0fbff",
+                  fontSize: 10,
+                  fontWeight: 600,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  whiteSpace: "nowrap",
+                  backdropFilter: "blur(6px)",
+                }}
+              >
+                {m.label}
+              </span>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 });
