@@ -26,10 +26,9 @@ export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  if (HIDDEN_ROUTES.has(pathname)) return null;
-
-  const transparent = pathname === "/";
-
+  // IMPORTANT: every hook must run on every render to keep React's hook
+  // ordering stable. The route-based bail-out happens AFTER all hooks so
+  // navigating between "/" and "/map" never changes the hook count.
   useEffect(() => {
     if (!menuOpen) return;
     const onPointerDown = (e: PointerEvent) => {
@@ -45,6 +44,10 @@ export function SiteHeader() {
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
+
+  if (HIDDEN_ROUTES.has(pathname)) return null;
+
+  const transparent = pathname === "/";
 
   return (
     <header

@@ -11,6 +11,15 @@ import { Globe, type GlobeHandle } from "@/components/Globe";
 // Diego + aggressive zoom-in) = 3200ms total. The cross-fade
 // overlaps the tail of the zoom so the planet appears to dive into
 // the map screen.
+//
+// Globe movement is split into two beats so the motion reads as
+// "rotate in place → then glide to centre + zoom":
+//   • STAGE_1_MS: rotate on its axis (no translate, no scale)
+//   • STAGE_2_MS: CSS transform eases the globe to card centre
+//     while scaling up. Runs in parallel with the globe's own
+//     Stage-2 rotation/zoom, and completes just before the route.
+const STAGE_1_MS = 1400;
+const STAGE_2_MS = 1600;
 const FADE_DURATION_MS = 1400;
 const FADE_IN_AT_MS = 2000;
 const ROUTE_AT_MS = 3200;
@@ -53,7 +62,7 @@ export default function HomePage() {
           planet. On Demo, the inner globe expands to `inset-0` and fills
           ONLY this card — the cross-fade then hands off to /map. */}
       <section className="relative mx-auto flex min-h-screen max-w-7xl items-center px-4 pt-24 pb-28 sm:px-6 sm:pt-28 md:px-12 md:pb-16 md:pt-32">
-        <div className="relative w-full overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#0b1224] via-[#080e1e] to-[#050814] px-5 py-10 shadow-[0_40px_120px_-40px_rgba(26,86,219,0.5)] sm:px-8 sm:py-14 md:px-16 md:py-20">
+        <div className="relative w-full min-h-[560px] overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#0b1224] via-[#080e1e] to-[#050814] px-5 py-10 shadow-[0_40px_120px_-40px_rgba(26,86,219,0.5)] sm:px-8 sm:py-14 md:px-16 md:py-20 md:min-h-[620px]">
           {/* Tagline + Demo stack. Fades out as the globe takes over. */}
           <div
             className={`relative z-20 flex flex-col items-start justify-between gap-8 transition-opacity duration-700 md:flex-row md:items-center md:gap-12 ${
@@ -102,38 +111,43 @@ export default function HomePage() {
             <div className="relative h-[min(38vh,240px)] w-full shrink-0 md:h-[320px] md:max-w-xl md:flex-1" />
           </div>
 
-          {/* Globe — absolute inside the card so `overflow-hidden` on the
-              parent clips anything that would otherwise spill past the
-              card edge. `inset` transitions drive the idle → flying grow.
-              pointer-events-none on the shell keeps the Demo button
-              clickable; the inner div re-enables pointer events just
-              on the globe so it stays interactive. */}
-          <div
-            className="pointer-events-none absolute z-10 ease-[cubic-bezier(0.16,1,0.3,1)]"
-            style={{
-              transition: `inset ${ROUTE_AT_MS}ms, width ${ROUTE_AT_MS}ms, height ${ROUTE_AT_MS}ms, right ${ROUTE_AT_MS}ms, bottom ${ROUTE_AT_MS}ms, transform ${ROUTE_AT_MS}ms`,
-              ...(flying
-                ? {
-                    inset: "0",
-                    right: "0",
-                    bottom: "0",
-                    width: "auto",
-                    height: "auto",
-                    transform: "scale(1.02)",
-                  }
-                : {
-                    // Parked: bottom-right of the card, partially
-                    // clipped by the card corner. Size is responsive to
-                    // the card, not the viewport.
-                    right: "clamp(-10rem, -6vw, -4rem)",
-                    bottom: "clamp(-10rem, -6vw, -4rem)",
-                    width: "clamp(320px, 52vw, 620px)",
-                    height: "clamp(320px, 52vw, 620px)",
-                    transform: "scale(1.04)",
-                  }),
-            }}
-          >
-            <div className="pointer-events-auto h-full w-full">
+          {/* Globe stage. Full-card flex container keeps the square
+              wrapper centered; the wrapper itself stays perfectly
+              square (aspect-[1/1]) at ALL times so the globe never
+              stretches into an "orb". Position + zoom are animated
+              purely via `transform` (translate + scale), which
+              interpolates without touching layout. During the demo
+              cinematic the translate eases back to (0,0) and scale
+              grows, so the globe glides from the bottom-right into
+              the card centre while rotating — no shape distortion.
+
+              `pointer-events-none` on the outer layer keeps the Demo
+              button clickable; the inner square re-enables events
+              so the globe remains draggable when idle. */}
+          <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+            <div
+              className="pointer-events-auto aspect-[1/1]"
+              style={{
+                // Square size scales with the card. Deliberately
+                // larger than before so the planet reads as the hero
+                // element even when parked off-corner.
+                width: "clamp(360px, 64%, 740px)",
+                transformOrigin: "center center",
+                willChange: "transform",
+                // Rotate-in-place first (Stage 1 rotation runs with
+                // zero translate/scale change), THEN translate +
+                // scale to centre during Stage 2. Delay == Stage 1
+                // duration so the two beats hand off cleanly.
+                transition: `transform ${STAGE_2_MS}ms cubic-bezier(0.16, 1, 0.3, 1) ${flying ? STAGE_1_MS : 0}ms`,
+                // Parked: shifted down-right so ~a third pokes past
+                // the card corner. The card's `overflow-hidden` does
+                // the clipping; the globe itself remains a pristine
+                // circle inside its square viewport.
+                transform: flying
+                  ? "translate(0%, 0%) scale(1.4)"
+                  : "translate(38%, 36%) scale(1)",
+              }}
+            >
               <Globe ref={globeRef} className="h-full w-full" />
             </div>
           </div>
