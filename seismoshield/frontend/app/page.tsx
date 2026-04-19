@@ -6,13 +6,13 @@ import { useEffect, useRef, useState } from "react";
 
 import { Globe, type GlobeHandle } from "@/components/Globe";
 
-// Timings for the click → /map cinematic. The flyTo inside <Globe/>
-// runs 1400ms (rotate to California) + 1800ms (rotate onto the San
-// Diego beacon) = 3200ms total, rotation-only. We start a SLOW fade
-// to /map about halfway through so the hand-off happens while the
-// globe is still rotating — no zoom, no hard cut.
-const FADE_DURATION_MS = 1800;
-const FADE_IN_AT_MS = 1400;
+// Timings for the click → /map cinematic. <Globe/> runs 1400ms
+// (rotate to California + gentle zoom) + 1800ms (rotate onto San
+// Diego + aggressive zoom-in) = 3200ms total. The cross-fade
+// overlaps the tail of the zoom so the planet appears to dive into
+// the map screen.
+const FADE_DURATION_MS = 1400;
+const FADE_IN_AT_MS = 2000;
 const ROUTE_AT_MS = 3200;
 
 export default function HomePage() {
@@ -105,13 +105,30 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Globe container. Stays parked in the hero-card's bottom-right
-           corner throughout the cinematic — no zoom / fullscreen morph.
-           The rotation is the primary motion, the cross-fade below is the
-           primary transition. */}
+      {/* ── Globe container. Morphs from the parked bottom-right pose
+           (resting) to a full-screen centered pose (flying) so the
+           rotation-plus-zoom inside <Globe/> reads as a proper fly-by
+           diving toward San Diego. */}
       <div
-        className="pointer-events-none fixed right-[-14rem] bottom-[-10rem] z-30 h-[620px] w-[620px]"
-        style={{ transform: "scale(1.1)" }}
+        className="pointer-events-none fixed z-30 ease-[cubic-bezier(0.16,1,0.3,1)]"
+        style={{
+          transition: `left ${ROUTE_AT_MS}ms, top ${ROUTE_AT_MS}ms, right ${ROUTE_AT_MS}ms, bottom ${ROUTE_AT_MS}ms, width ${ROUTE_AT_MS}ms, height ${ROUTE_AT_MS}ms, transform ${ROUTE_AT_MS}ms`,
+          ...(flying
+            ? {
+                left: "50%",
+                top: "50%",
+                width: "120vmax",
+                height: "120vmax",
+                transform: "translate(-50%, -50%) scale(1)",
+              }
+            : {
+                right: "-14rem",
+                bottom: "-10rem",
+                width: "620px",
+                height: "620px",
+                transform: "scale(1.1)",
+              }),
+        }}
       >
         <div className="pointer-events-auto h-full w-full">
           <Globe ref={globeRef} className="h-full w-full" />

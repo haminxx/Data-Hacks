@@ -236,18 +236,17 @@ export const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
           const sdThetaOffset = SAN_DIEGO_LAT_RAD - BASE_THETA;
 
           const el = containerRef.current;
-          // Cinematic is now rotation-only: rotate the planet toward
-          // California (stage 1), drift onto the San Diego beacon
-          // (stage 2). No dramatic zoom — the container stays put and
-          // the transition to /map is handled by a slow cross-fade in
-          // the parent page while these rotations run.
+          // Rotation cinematic pacing. The visual zoom itself is driven
+          // by the parent container's morph (620px → 120vmax), so here
+          // we only tweak brightness/saturation to make the approach
+          // feel punchier — scaling here would compound with the
+          // parent morph and crash us straight through the planet.
           const stage1Duration = 1400;
           const stage2Duration = 1800;
 
           if (el) {
             el.style.transition = `filter ${stage1Duration}ms cubic-bezier(0.33, 0, 0.2, 1)`;
-            el.style.transform = "";
-            el.style.filter = "brightness(1.06) saturate(1.08)";
+            el.style.filter = "brightness(1.08) saturate(1.1)";
           }
 
           const start = performance.now();
@@ -268,11 +267,12 @@ export const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
             } else {
               if (!stage2Triggered && el) {
                 stage2Triggered = true;
-                // Stage 2: rotate into San Diego while the globe stays
-                // in place. We lift the brightness slightly so the fly-by
-                // still feels "approach-y" without any scale change.
+                // Stage 2: rotation is tightening onto San Diego.
+                // Push brightness/saturation higher so the approach
+                // reads as "diving in" while the parent morph
+                // handles the actual zoom.
                 el.style.transition = `filter ${stage2Duration}ms cubic-bezier(0.22, 0.08, 0.25, 1)`;
-                el.style.filter = "brightness(1.15) saturate(1.18)";
+                el.style.filter = "brightness(1.25) saturate(1.25)";
               }
               const s2 = Math.min(1, (elapsed - stage1Duration) / stage2Duration);
               const e2 = easeOutQuart(s2);
