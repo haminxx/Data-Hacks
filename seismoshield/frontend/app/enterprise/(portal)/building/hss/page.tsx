@@ -1,7 +1,7 @@
 "use client";
 
+import { EnterpriseHeader } from "@/components/enterprise/EnterpriseHeader";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   Bar,
@@ -78,7 +78,6 @@ function riskBadge(risk: string): string {
 }
 
 export default function EnterpriseHSSPage() {
-  const router = useRouter();
   const [fp, setFp] = useState<FinancialProjectionResponse | null>(null);
   const [rs, setRs] = useState<RiskScoreResponse | null>(null);
   const [horizon, setHorizon] = useState<1 | 3 | 5 | 10>(10);
@@ -134,23 +133,21 @@ export default function EnterpriseHSSPage() {
   const totalRetrofit = fp.interior_hazards.reduce((s, h) => s + h.cost, 0);
 
   return (
-    <div className="min-h-screen bg-[#0B1220] text-white">
-      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/[0.08] bg-[#0F172A] px-4 py-4 md:px-8">
-        <span className="text-sm font-semibold text-[#1A56DB]">
-          SeismoShield Enterprise
-        </span>
-        <span className="text-sm text-white/70">Portfolio → HSS Building</span>
-        <div className="flex items-center gap-3 text-sm">
-          <span className="hidden sm:inline text-white/50">demo@seismoshield.com</span>
-          <button
-            type="button"
-            onClick={() => router.push("/enterprise/login")}
-            className="rounded-lg border border-white/15 px-3 py-1 text-white/80"
-          >
-            Sign Out
-          </button>
-        </div>
-      </header>
+    <div className="text-white">
+      <EnterpriseHeader
+        center={
+          <>
+            <Link
+              href="/enterprise/dashboard"
+              className="text-white/55 hover:text-white/90"
+            >
+              Portfolio
+            </Link>
+            <span className="px-2 text-white/35">→</span>
+            <span className="text-white">HSS Building</span>
+          </>
+        }
+      />
 
       <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
         <Link
@@ -340,8 +337,35 @@ export default function EnterpriseHSSPage() {
                   }
                 />
                 <Tooltip
-                  contentStyle={{ background: "#1e293b", border: "1px solid #334155" }}
-                  formatter={(value: number) => `$${Number(value).toLocaleString()}`}
+                  content={({ active, payload, label }) => {
+                    if (!active || !payload?.length) return null;
+                    const y = Number(label);
+                    const row = chartData.find((d) => d.year === y);
+                    return (
+                      <div className="rounded-lg border border-slate-600 bg-[#1e293b] p-3 text-xs text-slate-100 shadow-xl">
+                        <p className="mb-2 font-semibold text-white">Year {label}</p>
+                        <ul className="space-y-1">
+                          {payload.map((p) => (
+                            <li
+                              key={String(p.dataKey)}
+                              className="flex justify-between gap-6"
+                            >
+                              <span style={{ color: p.color }}>{p.name}</span>
+                              <span className="tabular-nums text-white">
+                                ${Number(p.value).toLocaleString()}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                        {row != null && (
+                          <p className="mt-2 border-t border-white/10 pt-2 text-[11px] text-red-200/95">
+                            Worst case stress: $
+                            {row.worst_case.toLocaleString()}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  }}
                 />
                 <Legend />
                 <ReferenceLine y={0} stroke="#f87171" strokeDasharray="4 4" label="Break Even" />
@@ -451,8 +475,11 @@ export default function EnterpriseHSSPage() {
             <button
               type="button"
               onClick={() => {
+                toast("Generating report…");
                 window.setTimeout(() => {
-                  toast("✓ Report ready — check your email at demo@seismoshield.com");
+                  toast(
+                    "✓ Report ready — check your email at demo@seismoshield.com",
+                  );
                 }, 1500);
               }}
               className="rounded-lg border border-white/15 py-2 text-sm text-white/85"

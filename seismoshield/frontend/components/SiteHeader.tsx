@@ -25,8 +25,6 @@ export function SiteHeader() {
   if (HIDDEN_ROUTES.has(pathname)) return null;
 
   const transparent = pathname === "/";
-  const riskRouteActive =
-    pathname === "/risk" || pathname.startsWith("/risk/");
 
   return (
     <header
@@ -38,16 +36,6 @@ export function SiteHeader() {
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-6 md:px-12">
         <div className="flex min-w-0 flex-1 items-center gap-3">
-        <Link
-          href="/risk"
-          className={`hidden shrink-0 rounded-full border px-3 py-1 text-[12px] font-medium transition sm:inline-flex ${
-            riskRouteActive
-              ? "border-[#1A56DB]/45 bg-[#1A56DB]/12 text-[#bfdbfe] shadow-[0_0_20px_-8px_rgba(26,86,219,0.5)]"
-              : "border-slate-500/50 text-white/85 hover:border-slate-400 hover:bg-white/5"
-          }`}
-        >
-          Risk Assessment
-        </Link>
         <Link
           href="/"
           className="group inline-flex min-w-0 items-center gap-2 text-sm font-semibold tracking-tight text-white"

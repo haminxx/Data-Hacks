@@ -1,35 +1,39 @@
 "use client";
 
+import { hasEnterpriseSession, setEnterpriseSession } from "@/lib/enterprise-session";
 import { ArrowRight, Building2, Loader2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 
 export default function EnterpriseLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("demo@seismoshield.com");
+  const [password, setPassword] = useState("demo123");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    if (hasEnterpriseSession()) {
+      router.replace("/enterprise/dashboard");
+      return;
+    }
+    router.prefetch("/enterprise/dashboard");
     router.prefetch("/enterprise/risk-assessment");
   }, [router]);
 
-  // No validation / no real auth — any non-empty input lets you through.
-  // Wire up a real identity provider here when the backend is ready.
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (submitting) return;
     if (!email.trim() || !password) return;
     setSubmitting(true);
-    // Tiny delay so the UI reads as an auth round-trip instead of an
-    // instant jump — replace with your real API call.
     window.setTimeout(() => {
-      router.push("/enterprise/risk-assessment");
+      setEnterpriseSession();
+      router.push("/enterprise/dashboard");
     }, 450);
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center bg-[#0F172A] px-6 pt-24 text-white">
+    <div className="relative flex min-h-screen flex-col items-center justify-center bg-[#0F172A] px-6 pb-12 pt-24 text-white">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(26,86,219,0.22)_0%,rgba(15,23,42,0)_65%)]"
@@ -114,9 +118,16 @@ export default function EnterpriseLoginPage() {
           </button>
 
           <p className="text-center text-[11px] text-white/40">
-            Demo build · any credentials are accepted
+            Demo credentials pre-filled for DataHacks @ UCSD
           </p>
         </form>
+
+        <Link
+          href="/"
+          className="mt-8 block text-center text-sm text-white/45 transition hover:text-white/80"
+        >
+          ← Back to SeismoShield
+        </Link>
       </div>
     </div>
   );

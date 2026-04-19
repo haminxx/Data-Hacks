@@ -1,5 +1,6 @@
 "use client";
 
+import { EnterpriseHeader } from "@/components/enterprise/EnterpriseHeader";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -58,25 +59,19 @@ export default function EnterpriseDashboardPage() {
   const toast = (msg: string) => window.alert(msg);
 
   return (
-    <div className="min-h-screen bg-[#0B1220] text-white">
-      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/[0.08] bg-[#0F172A] px-4 py-4 md:px-8">
-        <span className="text-sm font-semibold text-[#1A56DB] md:text-base">
-          SeismoShield Enterprise
-        </span>
-        <span className="text-sm text-white/80">Portfolio Overview</span>
-        <div className="flex items-center gap-3 text-sm">
-          <span className="hidden text-white/60 sm:inline">demo@seismoshield.com</span>
-          <button
-            type="button"
-            onClick={() => router.push("/enterprise/login")}
-            className="rounded-lg border border-white/15 px-3 py-1 text-white/80 hover:bg-white/5"
-          >
-            Sign Out
-          </button>
-        </div>
-      </header>
+    <div className="text-white">
+      <EnterpriseHeader center={<span>Portfolio Overview</span>} />
 
       <div className="mx-auto max-w-7xl px-4 py-8 md:px-8">
+        <div className="mb-6 flex flex-wrap items-center justify-end gap-3">
+          <Link
+            href="/enterprise/risk-assessment"
+            className="text-sm font-medium text-[#1A56DB] hover:text-[#93c5fd]"
+          >
+            Enterprise risk overview →
+          </Link>
+        </div>
+
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
             { label: "Total Properties", value: "4", icon: "🏢", color: "text-[#1A56DB]" },
