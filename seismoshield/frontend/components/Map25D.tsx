@@ -1,10 +1,16 @@
 "use client";
 
-import { FlyToInterpolator } from "@deck.gl/core";
+import {
+  AmbientLight,
+  DirectionalLight,
+  FlyToInterpolator,
+  LightingEffect,
+} from "@deck.gl/core";
 import { TileLayer } from "@deck.gl/geo-layers";
 import { BitmapLayer, PolygonLayer } from "@deck.gl/layers";
 import DeckGL from "@deck.gl/react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { StreetViewTarget } from "./StreetView";
 
 type SanGisFeature = {
   type: "Feature";
@@ -24,55 +30,71 @@ type SanGisCollection = {
   features: SanGisFeature[];
 };
 
-const INITIAL_VIEW = {
-  longitude: -117.16,
-  latitude: 32.78,
-  zoom: 10.8,
-  pitch: 45,
+type ViewState = {
+  longitude: number;
+  latitude: number;
+  zoom: number;
+  pitch: number;
+  bearing: number;
+  minZoom: number;
+  maxZoom: number;
+  transitionDuration?: number;
+  transitionInterpolator?: FlyToInterpolator;
+};
+
+const WIDE_SD_VIEW: ViewState = {
+  longitude: -117.08,
+  latitude: 32.87,
+  zoom: 9.3,
+  pitch: 35,
   bearing: 0,
-  minZoom: 8,
+  minZoom: 7,
   maxZoom: 19,
 };
 
-const FOCUS_VIEW = {
+const DOWNTOWN_VIEW: ViewState = {
   longitude: -117.161,
   latitude: 32.714,
-  zoom: 14.6,
-  pitch: 58,
+  zoom: 14.8,
+  pitch: 60,
   bearing: 24,
-  minZoom: 8,
+  minZoom: 7,
   maxZoom: 19,
 };
 
-const UCSD_VIEW = {
+const UCSD_VIEW: ViewState = {
   longitude: -117.2364,
   latitude: 32.8801,
-  zoom: 15.4,
+  zoom: 15.6,
   pitch: 60,
   bearing: 30,
-  minZoom: 8,
+  minZoom: 7,
   maxZoom: 19,
 };
 
 const CATEGORY_COLORS: Record<string, [number, number, number]> = {
-  commercial: [59, 130, 246],
-  residential: [168, 85, 247],
-  hotel: [236, 72, 153],
-  civic: [234, 179, 8],
-  education: [34, 197, 94],
+  commercial: [96, 165, 250],
+  residential: [192, 132, 252],
+  hotel: [244, 114, 182],
+  civic: [250, 204, 21],
+  education: [74, 222, 128],
 };
+
+const HEIGHT_EXAGGERATION = 3.2;
 
 function colorFor(
   feature: SanGisFeature,
   hovered: string | null,
+  selected: string | null,
 ): [number, number, number, number] {
   const base =
     CATEGORY_COLORS[feature.properties.category ?? "commercial"] ?? [
-      59, 130, 246,
+      96, 165, 250,
     ];
   const isHover = hovered === feature.properties.name;
-  const alpha = isHover ? 235 : 190;
-  const boost = isHover ? 35 : 0;
+  const isSelected = selected === feature.properties.name;
+  const alpha = isSelected ? 255 : isHover ? 240 : 210;
+  const boost = isSelected ? 55 : isHover ? 30 : 0;
   return [
     Math.min(255, base[0] + boost),
     Math.min(255, base[1] + boost),
@@ -81,52 +103,79 @@ function colorFor(
   ];
 }
 
-export default function Map25D() {
+function polygonCentroid(ring: number[][]): [number, number] {
+  let sumLng = 0;
+  let sumLat = 0;
+  const uniq = ring.length > 1 &&
+    ring[0][0] === ring[ring.length - 1][0] &&
+    ring[0][1] === ring[ring.length - 1][1]
+    ? ring.slice(0, -1)
+    : ring;
+  for (const [lng, lat] of uniq) {
+    sumLng += lng;
+    sumLat += lat;
+  }
+  return [sumLng / uniq.length, sumLat / uniq.length];
+}
+
+interface Map25DProps {
+  onBuildingSelect?: (target: StreetViewTarget | null) => void;
+  selectedName?: string | null;
+}
+
+export default function Map25D({
+  onBuildingSelect,
+  selectedName = null,
+}: Map25DProps) {
   const [features, setFeatures] = useState<SanGisFeature[]>([]);
-  const [viewState, setViewState] = useState<typeof INITIAL_VIEW>(INITIAL_VIEW);
+  const [viewState, setViewState] = useState<ViewState>(WIDE_SD_VIEW);
   const [hoverName, setHoverName] = useState<string | null>(null);
-  const [loaded, setLoaded] = useState(false);
+  const onSelectRef = useRef(onBuildingSelect);
+
+  useEffect(() => {
+    onSelectRef.current = onBuildingSelect;
+  }, [onBuildingSelect]);
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/sangis_san_diego.geojson")
+    fetch("/sangis_san_diego.geojson", { cache: "force-cache" })
       .then((r) => r.json() as Promise<SanGisCollection>)
       .then((gj) => {
         if (!cancelled) setFeatures(gj.features ?? []);
       })
       .catch(() => {
         if (!cancelled) setFeatures([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoaded(true);
       });
     return () => {
       cancelled = true;
     };
   }, []);
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setViewState((vs) => ({
-        ...vs,
-        ...FOCUS_VIEW,
-        transitionDuration: 2800,
-        transitionInterpolator: new FlyToInterpolator({ speed: 1.6 }),
-      }) as typeof INITIAL_VIEW);
-    }, 600);
-    return () => window.clearTimeout(timer);
+  const goTo = useCallback((target: ViewState) => {
+    setViewState({
+      ...target,
+      transitionDuration: 2200,
+      transitionInterpolator: new FlyToInterpolator({ speed: 1.8 }),
+    });
   }, []);
 
-  const goTo = useCallback(
-    (target: typeof INITIAL_VIEW) => {
-      setViewState({
-        ...target,
-        transitionDuration: 2200,
-        transitionInterpolator: new FlyToInterpolator({ speed: 1.8 }),
-      } as typeof INITIAL_VIEW);
-    },
-    [],
-  );
+  const lightingEffect = useMemo(() => {
+    const ambient = new AmbientLight({
+      color: [255, 255, 255],
+      intensity: 1.2,
+    });
+    const sun = new DirectionalLight({
+      color: [255, 245, 225],
+      intensity: 2.6,
+      direction: [-3, -9, -3],
+    });
+    const fill = new DirectionalLight({
+      color: [160, 180, 255],
+      intensity: 1.1,
+      direction: [4, -2, -5],
+    });
+    return new LightingEffect({ ambient, sun, fill });
+  }, []);
 
   const layers = useMemo(() => {
     const basemap = new TileLayer({
@@ -155,44 +204,65 @@ export default function Map25D() {
       extruded: true,
       wireframe: false,
       getPolygon: (f) => f.geometry.coordinates[0] as unknown as number[][],
-      getElevation: (f) => f.properties.height,
-      getFillColor: (f) => colorFor(f, hoverName),
+      getElevation: (f) => f.properties.height * HEIGHT_EXAGGERATION,
+      getFillColor: (f) => colorFor(f, hoverName, selectedName),
       getLineColor: (f) =>
-        hoverName === f.properties.name
-          ? [219, 234, 254, 255]
-          : [26, 86, 219, 210],
+        selectedName === f.properties.name
+          ? [255, 255, 255, 255]
+          : hoverName === f.properties.name
+            ? [219, 234, 254, 240]
+            : [26, 86, 219, 150],
       lineWidthMinPixels: 1.2,
       material: {
-        ambient: 0.5,
-        diffuse: 0.7,
-        shininess: 48,
-        specularColor: [80, 120, 200],
+        ambient: 0.35,
+        diffuse: 0.85,
+        shininess: 64,
+        specularColor: [120, 160, 220],
       },
       pickable: true,
       autoHighlight: true,
-      highlightColor: [26, 86, 219, 90],
+      highlightColor: [255, 255, 255, 90],
       onHover: (info) => {
         setHoverName(info.object ? info.object.properties.name : null);
       },
+      onClick: (info) => {
+        if (!info.object) return;
+        const feature = info.object as SanGisFeature;
+        const ring = feature.geometry.coordinates[0] as unknown as number[][];
+        const [lng, lat] = polygonCentroid(ring);
+        onSelectRef.current?.({
+          name: feature.properties.name,
+          height: feature.properties.height,
+          category: feature.properties.category,
+          lng,
+          lat,
+        });
+      },
       updateTriggers: {
-        getFillColor: [hoverName],
-        getLineColor: [hoverName],
+        getFillColor: [hoverName, selectedName],
+        getLineColor: [hoverName, selectedName],
       },
     });
 
     return [basemap, buildings];
-  }, [features, hoverName]);
+  }, [features, hoverName, selectedName]);
+
+  const hoveredFeature = hoverName
+    ? features.find((f) => f.properties.name === hoverName)
+    : null;
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#0F172A]">
       <DeckGL
-        initialViewState={INITIAL_VIEW}
+        initialViewState={WIDE_SD_VIEW}
         viewState={viewState}
         controller={{ dragRotate: true, inertia: 500 }}
-        onViewStateChange={(evt) =>
-          setViewState(evt.viewState as typeof INITIAL_VIEW)
-        }
+        onViewStateChange={(evt) => setViewState(evt.viewState as ViewState)}
         layers={layers}
+        effects={[lightingEffect]}
+        getCursor={({ isDragging, isHovering }) =>
+          isDragging ? "grabbing" : isHovering ? "pointer" : "grab"
+        }
       />
 
       <div className="pointer-events-none absolute left-4 top-4 z-10 max-w-xs rounded-xl border border-white/10 bg-black/60 p-4 text-white backdrop-blur">
@@ -203,14 +273,22 @@ export default function Map25D() {
           San Diego Urban Model
         </p>
         <p className="mt-2 text-xs leading-relaxed text-white/70">
-          Interactive deck.gl view powered by SanGIS building footprints.
-          Drag to pan, scroll to zoom, hold <kbd className="rounded bg-white/10 px-1">Ctrl</kbd> + drag to tilt & rotate.
+          Click a building to open Google Street View 360°. Drag to pan, scroll
+          to zoom, hold <kbd className="rounded bg-white/10 px-1">Ctrl</kbd> +
+          drag to tilt & rotate.
         </p>
         <div className="pointer-events-auto mt-3 flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => goTo(FOCUS_VIEW)}
+            onClick={() => goTo(WIDE_SD_VIEW)}
             className="rounded-full bg-[#1A56DB] px-3 py-1 text-xs font-semibold hover:bg-[#1647b3]"
+          >
+            San Diego
+          </button>
+          <button
+            type="button"
+            onClick={() => goTo(DOWNTOWN_VIEW)}
+            className="rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs font-semibold hover:bg-white/10"
           >
             Downtown
           </button>
@@ -221,25 +299,20 @@ export default function Map25D() {
           >
             UCSD Campus
           </button>
-          <button
-            type="button"
-            onClick={() => goTo(INITIAL_VIEW)}
-            className="rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs font-semibold hover:bg-white/10"
-          >
-            Wide View
-          </button>
         </div>
       </div>
 
-      {hoverName && (
+      {hoveredFeature && (
         <div className="pointer-events-none absolute right-4 top-4 z-10 rounded-lg border border-[#1A56DB]/50 bg-[#0F172A]/95 px-3 py-2 text-sm text-white shadow-lg backdrop-blur">
-          <p className="font-semibold text-[#93c5fd]">{hoverName}</p>
+          <p className="font-semibold text-[#93c5fd]">
+            {hoveredFeature.properties.name}
+          </p>
           <p className="text-xs text-white/60">
-            {
-              features.find((f) => f.properties.name === hoverName)?.properties
-                .height
-            }
-            m · SanGIS footprint
+            {hoveredFeature.properties.height} m ·{" "}
+            {hoveredFeature.properties.category ?? "building"}
+          </p>
+          <p className="mt-0.5 text-[10px] uppercase tracking-[0.14em] text-white/40">
+            Click to view 360°
           </p>
         </div>
       )}
@@ -247,12 +320,6 @@ export default function Map25D() {
       <div className="pointer-events-none absolute bottom-3 right-4 z-10 text-[10px] uppercase tracking-[0.15em] text-white/40">
         © OpenStreetMap · CARTO · SanGIS
       </div>
-
-      {!loaded && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#0F172A]/80 text-sm text-white/70">
-          Loading SanGIS model…
-        </div>
-      )}
     </div>
   );
 }
