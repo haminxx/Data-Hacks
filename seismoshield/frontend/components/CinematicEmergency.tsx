@@ -161,11 +161,13 @@ const INJECTED_STYLES = `
 
 export interface CinematicEmergencyProps
   extends React.HTMLAttributes<HTMLDivElement> {
-  brandName?: string;
   cardHeading?: string;
   cardDescription?: React.ReactNode;
   arHeading?: string;
   arSubtitle?: string;
+  /** Background image for the AR act (equirectangular hallway w/ exit
+   *  sign). Positioned as the backdrop under the HUD overlays. */
+  arBackgroundUrl?: string;
 }
 
 /**
@@ -181,17 +183,16 @@ export interface CinematicEmergencyProps
  *          waypoint chevrons, radar sweep, and HUD telemetry.
  */
 export function CinematicEmergency({
-  brandName = "SeismoShield",
   cardHeading = "Guidance, the moment it shakes.",
   cardDescription = (
     <>
-      <span className="font-semibold text-white">SeismoShield</span> turns the
-      USGS ShakeAlert feed into a real-time drop-cover-hold response, then
-      hands you off to an AR evacuation layer the instant the shaking stops.
+      Real-time ShakeAlert triggers a drop-cover-hold response, then hands
+      you off to an AR evacuation layer the instant the shaking stops.
     </>
   ),
   arHeading = "AR evacuation guidance",
   arSubtitle = "Follow the markers to the nearest rally point. Green chevrons are safe egress. Red bands mark blocked routes.",
+  arBackgroundUrl = "/ar/exit-hallway.png",
   className,
   ...props
 }: CinematicEmergencyProps) {
@@ -250,7 +251,6 @@ export function CinematicEmergency({
       gsap.set(
         [
           ".ce-card-left-text",
-          ".ce-card-right-text",
           ".ce-mockup-wrapper",
           ".ce-floating-badge",
           ".ce-phone-widget",
@@ -277,7 +277,9 @@ export function CinematicEmergency({
       const scrollTl = gsap.timeline({
         scrollTrigger: {
           trigger: containerRef.current,
-          start: "top top",
+          // Pin below the 64px global header so the cinematic never
+          // slides under the nav.
+          start: "top 64",
           end: "+=7200",
           pin: true,
           scrub: 1,
@@ -377,19 +379,13 @@ export function CinematicEmergency({
           { x: 0, autoAlpha: 1, ease: "power4.out", duration: 1.5 },
           "-=1.5",
         )
-        .fromTo(
-          ".ce-card-right-text",
-          { x: 50, autoAlpha: 0, scale: 0.8 },
-          { x: 0, autoAlpha: 1, scale: 1, ease: "expo.out", duration: 1.5 },
-          "<",
-        )
         .to({}, { duration: 2 })
         // ACT 3 — zoom INTO the phone screen. Bezel inflates past the
         // viewport while widgets, badges, and the card text dissolve,
         // then the AR wrapper fades in from scale 1.3 → 1.0 so it feels
         // like emerging OUT of the phone rather than a hard cut.
         .to(
-          [".ce-card-left-text", ".ce-card-right-text", ".ce-floating-badge"],
+          [".ce-card-left-text", ".ce-floating-badge"],
           {
             autoAlpha: 0,
             y: -30,
@@ -463,7 +459,9 @@ export function CinematicEmergency({
     <div
       ref={containerRef}
       className={cn(
-        "relative h-screen w-screen overflow-hidden bg-[#07070c] font-sans antialiased text-white",
+        // Full viewport minus the 64px fixed header so the cinematic
+        // never sits behind the nav.
+        "relative h-[calc(100vh-4rem)] w-screen overflow-hidden bg-[#07070c] font-sans antialiased text-white",
         className,
       )}
       style={{ perspective: "1500px" }}
@@ -476,17 +474,20 @@ export function CinematicEmergency({
         aria-hidden="true"
       />
 
-      {/* ── ACT 1 — floating iOS emergency alert banner ─────────── */}
-      <div className="ce-hero-wrapper absolute inset-x-0 top-0 z-10 flex h-full w-full items-start justify-center px-4 pt-20 md:pt-28">
+      {/* ── ACT 1 — iOS emergency alert banner ──────────────────────
+          Centered both axes, larger than an on-device notification so
+          it reads clearly on desktop. The proportions still match the
+          iOS reference (rounded square icon, title row, body, source). */}
+      <div className="ce-hero-wrapper absolute inset-0 z-10 flex h-full w-full items-center justify-center px-4">
         <div
-          className="ce-notif ce-gsap-reveal w-full max-w-md will-change-transform"
+          className="ce-notif ce-gsap-reveal w-full max-w-2xl will-change-transform"
           role="alert"
         >
-          <div className="ce-ios-notif flex items-start gap-3 rounded-[22px] px-4 py-3.5">
-            <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-[#fbbf24]/15 ring-1 ring-[#fbbf24]/35">
+          <div className="ce-ios-notif flex items-start gap-5 rounded-[32px] px-7 py-6 md:gap-6 md:px-9 md:py-7">
+            <div className="mt-0.5 flex h-16 w-16 shrink-0 items-center justify-center rounded-[22px] bg-[#fbbf24]/15 ring-1 ring-[#fbbf24]/35 md:h-20 md:w-20 md:rounded-[26px]">
               <svg
                 viewBox="0 0 24 24"
-                className="h-6 w-6 text-[#fbbf24]"
+                className="h-10 w-10 text-[#fbbf24] md:h-12 md:w-12"
                 fill="currentColor"
                 aria-hidden="true"
               >
@@ -495,23 +496,23 @@ export function CinematicEmergency({
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-baseline justify-between gap-3">
-                <span className="flex items-center gap-1.5 text-[13px] font-semibold leading-tight text-white">
-                  <span className="ce-live-dot h-1.5 w-1.5 rounded-full bg-[#ef4444]" />
+                <span className="flex items-center gap-2 text-lg font-semibold leading-tight text-white md:text-xl">
+                  <span className="ce-live-dot h-2 w-2 rounded-full bg-[#ef4444]" />
                   Emergency Alert
                 </span>
-                <span className="shrink-0 text-[11px] font-medium text-white/55">
+                <span className="shrink-0 text-sm font-medium text-white/55 md:text-base">
                   now
                 </span>
               </div>
-              <p className="mt-1 text-[13px] leading-[1.35] text-white/90">
+              <p className="mt-2 text-[17px] leading-[1.4] text-white/95 md:text-lg">
                 Earthquake Detected! Drop, Cover, Hold On. Protect Yourself.
               </p>
-              <p className="mt-0.5 text-[11px] font-medium text-white/50">
+              <p className="mt-1.5 text-sm font-medium text-white/55 md:text-base">
                 — USGS ShakeAlert
               </p>
             </div>
           </div>
-          <p className="mt-6 text-center text-[11px] uppercase tracking-[0.28em] text-white/40">
+          <p className="mt-8 text-center text-[11px] uppercase tracking-[0.28em] text-white/40">
             Scroll to see the response
           </p>
         </div>
@@ -528,15 +529,8 @@ export function CinematicEmergency({
         >
           <div className="ce-card-sheen" aria-hidden="true" />
 
-          <div className="relative z-10 mx-auto flex h-full w-full max-w-7xl flex-col items-center justify-evenly px-4 py-6 lg:grid lg:grid-cols-3 lg:gap-8 lg:px-12 lg:py-0">
-            {/* TOP (mobile) / RIGHT (desktop): BRAND */}
-            <div className="ce-card-right-text ce-gsap-reveal order-1 z-20 flex w-full justify-center lg:order-3 lg:justify-end">
-              <h2 className="ce-card-silver text-[3rem] font-black uppercase tracking-tighter sm:text-6xl md:text-[6rem] lg:text-[7rem]">
-                {brandName}
-              </h2>
-            </div>
-
-            {/* CENTER: iPhone mockup */}
+          <div className="relative z-10 mx-auto flex h-full w-full max-w-7xl flex-col items-center justify-evenly gap-4 px-4 py-6 lg:grid lg:grid-cols-[1fr_auto] lg:gap-16 lg:px-12 lg:py-0">
+            {/* RIGHT (desktop) / CENTER (mobile): iPhone mockup */}
             <div
               className="ce-mockup-wrapper order-2 relative z-10 flex h-[380px] w-full items-center justify-center lg:order-2 lg:h-[600px]"
               style={{ perspective: "1000px" }}
@@ -751,12 +745,12 @@ export function CinematicEmergency({
               </div>
             </div>
 
-            {/* BOTTOM (mobile) / LEFT (desktop): HEADING */}
+            {/* LEFT (desktop) / BOTTOM (mobile): HEADING + copy */}
             <div className="ce-card-left-text ce-gsap-reveal order-3 z-20 flex w-full flex-col justify-center px-4 text-center lg:order-1 lg:max-w-none lg:px-0 lg:text-left">
-              <h3 className="mb-0 text-2xl font-bold tracking-tight text-white md:text-3xl lg:mb-5 lg:text-4xl">
+              <h3 className="mb-0 text-3xl font-bold tracking-tight text-white md:text-4xl lg:mb-5 lg:text-5xl">
                 {cardHeading}
               </h3>
-              <p className="mx-auto hidden max-w-sm text-sm font-normal leading-relaxed text-red-100/60 md:block md:text-base lg:mx-0 lg:max-w-none lg:text-lg">
+              <p className="mx-auto mt-3 hidden max-w-sm text-sm font-normal leading-relaxed text-red-100/60 md:block md:text-base lg:mx-0 lg:mt-0 lg:max-w-none lg:text-lg">
                 {cardDescription}
               </p>
             </div>
@@ -766,33 +760,29 @@ export function CinematicEmergency({
 
       {/* ── ACT 3 — AR camera viewfinder ─────────────────────────── */}
       <div className="ce-ar-wrapper ce-gsap-reveal pointer-events-none absolute inset-0 z-30 overflow-hidden">
-        {/* Dark "camera feed" — layered gradients fake a dim hallway with
-            a vanishing point down the center, so the chevrons and HUD
-            have somewhere to point. */}
+        {/* Live camera feed: real hallway photo with an EXIT sign so the
+            AR chevrons have something believable to point at. Slight
+            saturation/contrast shift to sell the "through the camera"
+            read. */}
+        <div
+          className="absolute inset-0 bg-center bg-cover"
+          style={{
+            backgroundImage: `url(${arBackgroundUrl})`,
+            filter: "saturate(0.9) contrast(1.05)",
+          }}
+          aria-hidden="true"
+        />
+        {/* Dim vignette so the green HUD elements stay legible over the
+            photograph. */}
         <div
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse 80% 60% at 50% 55%, #0d1b2a 0%, #050914 60%, #000 100%), linear-gradient(180deg, rgba(10,10,20,0) 0%, rgba(10,10,20,0.55) 100%)",
+              "radial-gradient(ellipse 100% 80% at 50% 55%, rgba(5,9,20,0.2) 0%, rgba(5,9,20,0.55) 70%, rgba(0,0,0,0.75) 100%)",
           }}
           aria-hidden="true"
         />
-        {/* Perspective floor grid to sell the "you're walking a hallway" read */}
-        <div
-          className="absolute inset-x-0 bottom-0 h-[55%] opacity-50"
-          style={{
-            background:
-              "linear-gradient(to top, rgba(34,197,94,0.12) 0%, transparent 70%), repeating-linear-gradient(0deg, rgba(34,197,94,0.18) 0 1px, transparent 1px 48px), repeating-linear-gradient(90deg, rgba(34,197,94,0.12) 0 1px, transparent 1px 48px)",
-            transform: "perspective(600px) rotateX(62deg)",
-            transformOrigin: "bottom center",
-            maskImage:
-              "linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 95%)",
-            WebkitMaskImage:
-              "linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 95%)",
-          }}
-          aria-hidden="true"
-        />
-        {/* Moving scan line */}
+        {/* Moving scan line on top of the feed */}
         <div
           className="ce-scanline pointer-events-none absolute inset-0"
           aria-hidden="true"
@@ -892,12 +882,14 @@ export function CinematicEmergency({
           </div>
         </div>
 
-        {/* Top center heading */}
-        <div className="ce-ar-hud ce-gsap-reveal absolute inset-x-0 top-24 flex flex-col items-center text-center md:top-32">
-          <h2 className="text-2xl font-bold tracking-tight text-white drop-shadow-[0_4px_20px_rgba(34,197,94,0.25)] md:text-4xl">
+        {/* Heading + subtitle. Positioned in the upper-center band so
+            they don't fight with the physical EXIT sign in the photo
+            (which the chevrons already point to). */}
+        <div className="ce-ar-hud ce-gsap-reveal absolute inset-x-0 top-[28%] flex flex-col items-center px-6 text-center">
+          <h2 className="rounded-xl bg-black/45 px-4 py-2 text-xl font-semibold tracking-tight text-white backdrop-blur-md md:text-2xl">
             {arHeading}
           </h2>
-          <p className="mt-2 max-w-xl px-6 text-xs text-white/55 md:text-sm">
+          <p className="mt-3 hidden max-w-lg text-xs text-white/70 drop-shadow md:block md:text-sm">
             {arSubtitle}
           </p>
         </div>

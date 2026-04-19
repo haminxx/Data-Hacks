@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 
-import { EmergencyModal } from "@/components/EmergencyModal";
 import { SiteHeader } from "@/components/SiteHeader";
 import "./globals.css";
 
@@ -35,7 +34,6 @@ export default function RootLayout({
         >
           Skip to content
         </a>
-        <EmergencyModal />
         <SiteHeader />
         <main id="main-content" className="flex flex-1 flex-col min-h-0">
           {children}

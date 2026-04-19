@@ -89,14 +89,18 @@
   color: rgba(255, 255, 255, 0.38);
 }
 
+/* Icon on the right side of the expanded search pill. We use
+   top:0/bottom:0 + flex-center (no transform) to keep it vertically
+   aligned with the box height — the previous `translateY(-50%)` got
+   overwritten as soon as framer-motion started animating scale/opacity
+   on the motion.div, which is why the icon was drifting off-center. */
 .separateElement {
   position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
+  right: 14px;
+  top: 0;
+  bottom: 0;
   width: 18px;
-  height: 18px;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.9);
   display: flex;
   align-items: center;
   justify-content: center;
