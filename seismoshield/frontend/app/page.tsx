@@ -6,13 +6,14 @@ import { useEffect, useRef, useState } from "react";
 
 import { Globe, type GlobeHandle } from "@/components/Globe";
 
-// Timings for the click → /map cinematic. The flyTo inside <Globe/> runs
-// 900ms + 800ms, so by ~1700ms the camera is locked on the San Diego
-// beacon. We start the cross-fade a hair before that and hard-navigate at
-// 1700ms so the whole handoff lands in under 2 seconds.
-const EXPAND_MS = 1300;
-const FADE_IN_AT_MS = 1100;
-const ROUTE_AT_MS = 1700;
+// Timings for the click → /map cinematic. The flyTo inside <Globe/> now
+// runs 1600ms (rotate to California) + 2400ms (fly-by + zoom to the San
+// Diego beacon) = 4000ms. The globe container expands in parallel; the
+// cross-fade is held back to the very end so the user gets the full
+// fly-by before the dissolve. /map is prefetched so the route is instant.
+const EXPAND_MS = 3600;
+const FADE_IN_AT_MS = 3650;
+const ROUTE_AT_MS = 4000;
 
 export default function HomePage() {
   const router = useRouter();

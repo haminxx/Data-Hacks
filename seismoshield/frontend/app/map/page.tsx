@@ -22,8 +22,36 @@ const StreetView = dynamic(() => import("@/components/StreetView"), {
   ssr: false,
 });
 
-type BuildingSearchItem = SearchableItem & BuildingIndexEntry;
+const BuildingPanorama = dynamic(
+  () => import("@/components/BuildingPanorama"),
+  { ssr: false },
+);
+
+type BuildingSearchItem = SearchableItem &
+  BuildingIndexEntry & {
+    /** Marks a synthetic row that opens a GLB panorama instead of
+     *  Google Street View (e.g. the hard-wired HSS hotkey). */
+    panoramaMode?: "street" | "glb";
+    glbUrl?: string;
+  };
 type Phase = "idle" | "flying" | "street";
+
+// Hard-wired entry: typing any substring of "HSS" or "Humanities"
+// surfaces this as a search result. Picking it flies the map to the
+// building's centroid, then opens the in-map GLB 360° overlay instead
+// of Google Street View. Coordinates are approximate UCSD HSS.
+const HSS_HOTKEY: BuildingSearchItem = {
+  id: "hss-glb-pano",
+  name: "Humanities and Social Sciences Building",
+  label: "Humanities and Social Sciences Building",
+  meta: "HSS · 360°",
+  category: "education",
+  height: 18,
+  lng: -117.2416,
+  lat: 32.8837,
+  panoramaMode: "glb",
+  glbUrl: "/models/room-360.glb",
+};
 
 // Keep this in sync with the flyToBuilding transition inside <Map25D/>.
 // The pane waits this long before cross-fading into the Street View panel
@@ -73,16 +101,17 @@ export default function MapPage() {
     setBuildings(list);
   }, []);
 
-  const searchItems = useMemo<BuildingSearchItem[]>(
-    () =>
-      buildings.map((b) => ({
-        ...b,
-        id: b.id,
-        label: b.name,
-        meta: b.category,
-      })),
-    [buildings],
-  );
+  const searchItems = useMemo<BuildingSearchItem[]>(() => {
+    const fromMap = buildings.map<BuildingSearchItem>((b) => ({
+      ...b,
+      id: b.id,
+      label: b.name,
+      meta: b.category,
+    }));
+    // Prepend the HSS hotkey so it surfaces instantly when the user
+    // starts typing "HSS" or "Humanities".
+    return [HSS_HOTKEY, ...fromMap];
+  }, [buildings]);
 
   const handleSearchPick = useCallback((item: BuildingSearchItem) => {
     setSelected({
@@ -91,6 +120,8 @@ export default function MapPage() {
       category: item.category,
       lng: item.lng,
       lat: item.lat,
+      panoramaMode: item.panoramaMode,
+      glbUrl: item.glbUrl,
     });
   }, []);
 
@@ -166,9 +197,11 @@ export default function MapPage() {
         </div>
       )}
 
-      {/* Full-screen Street View overlay. Mounted as soon as a building is
-          selected so Google starts fetching the panorama during the fly-in,
-          then fades in once the camera has locked onto the target. */}
+      {/* Full-screen panorama overlay. Mounted as soon as a building is
+          selected so the pano (either Google Street View or a bundled
+          GLB capture) starts fetching during the fly-in, then fades in
+          once the camera has locked onto the target. Route switches
+          based on `panoramaMode` carried on the target. */}
       <div
         className={`absolute inset-0 z-30 transition-opacity duration-700 ease-out ${
           isStreet
@@ -177,9 +210,11 @@ export default function MapPage() {
         }`}
         aria-hidden={!isStreet}
       >
-        {selected && (
+        {selected && selected.panoramaMode === "glb" ? (
+          <BuildingPanorama target={selected} onClose={handleClose} />
+        ) : selected ? (
           <StreetView target={selected} onClose={handleClose} />
-        )}
+        ) : null}
       </div>
     </main>
   );

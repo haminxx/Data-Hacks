@@ -8,7 +8,13 @@ import {
   useProgress,
   useTexture,
 } from "@react-three/drei";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import * as THREE from "three";
 import { X } from "lucide-react";
 
@@ -41,44 +47,84 @@ const DEFAULT_HOTSPOTS: HotspotData[] = [
 interface SceneModelProps {
   url: string;
   onPointerDown?: (event: ThreeEvent<PointerEvent>) => void;
+  onReady?: (info: SceneInfo) => void;
 }
 
-function SceneModel({ url, onPointerDown }: SceneModelProps) {
+type SceneInfo = {
+  diagonal: number;
+  center: THREE.Vector3;
+  meshCount: number;
+  hasTextures: boolean;
+};
+
+function SceneModel({ url, onPointerDown, onReady }: SceneModelProps) {
   const { scene } = useGLTF(url);
-  const { camera } = useThree();
+  const { camera, gl } = useThree();
 
   // Clone once so multiple instances don't share mutated material/mesh flags.
   const cloned = useMemo(() => scene.clone(true), [scene]);
 
-  // Re-center the scene so its bounding-box midpoint sits at the world
-  // origin, then drop the camera inside it. For a photogrammetry capture
-  // exported as a GLB, this puts the viewer "inside" the scan regardless
-  // of the file's authoring origin. We also harden materials so interior
-  // walls render from both sides.
   useEffect(() => {
+    // 1. Re-center the scene so its bbox midpoint sits at the world origin.
     const box = new THREE.Box3().setFromObject(cloned);
     const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const diagonal = size.length();
     cloned.position.sub(center);
 
+    // 2. Walk the scene. For every textured mesh, swap its material for an
+    //    unlit MeshBasicMaterial so the baked 360° texture renders exactly
+    //    as captured (photospheres must not receive shading). Double-side
+    //    everything so interior-facing faces render regardless of winding.
+    let meshCount = 0;
+    let hasTextures = false;
     cloned.traverse((obj) => {
       const mesh = obj as THREE.Mesh;
       if (!mesh.isMesh) return;
+      meshCount += 1;
       mesh.frustumCulled = false;
+
       const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-      mats.forEach((m) => {
-        if (!m) return;
-        const mm = m as THREE.MeshStandardMaterial;
-        mm.side = THREE.DoubleSide;
-        if (mm.map) mm.map.colorSpace = THREE.SRGBColorSpace;
-        mm.needsUpdate = true;
+      const upgraded = mats.map((m) => {
+        if (!m) return m;
+        const std = m as THREE.MeshStandardMaterial;
+        const map = std.map ?? null;
+        if (map) {
+          hasTextures = true;
+          map.colorSpace = THREE.SRGBColorSpace;
+          map.anisotropy = gl.capabilities.getMaxAnisotropy?.() ?? 4;
+          const basic = new THREE.MeshBasicMaterial({
+            map,
+            side: THREE.DoubleSide,
+            toneMapped: false,
+          });
+          return basic;
+        }
+        // No texture — keep original but force DoubleSide so interior
+        // walls still render if the mesh is a hollow room.
+        (std as THREE.Material & { side?: THREE.Side }).side = THREE.DoubleSide;
+        std.needsUpdate = true;
+        return std;
       });
+
+      mesh.material = upgraded.length === 1 ? upgraded[0]! : (upgraded as THREE.Material[]);
     });
 
-    // Anchor the camera slightly above world origin so orbiting feels
-    // natural inside a room-scale capture.
-    camera.position.set(0, 0.05, 0.01);
-    camera.lookAt(0, 0, 0);
-  }, [cloned, camera]);
+    // 3. Camera at the bbox center so the user is *inside* whatever the
+    //    GLB is — a 360 sphere, a room scan, or a photogrammetry capsule.
+    //    Near/far are scaled to the scene so we never clip.
+    const near = Math.max(0.001, diagonal * 0.0005);
+    const far = Math.max(2000, diagonal * 20);
+    if ("fov" in camera) {
+      (camera as THREE.PerspectiveCamera).near = near;
+      (camera as THREE.PerspectiveCamera).far = far;
+      (camera as THREE.PerspectiveCamera).updateProjectionMatrix();
+    }
+    camera.position.set(0, 0, 0);
+    camera.lookAt(0, 0, -1);
+
+    onReady?.({ diagonal, center, meshCount, hasTextures });
+  }, [cloned, camera, gl, onReady]);
 
   return <primitive object={cloned} onPointerDown={onPointerDown} />;
 }
@@ -98,7 +144,7 @@ function SphereEnvironment({ textureUrl, onPointerDown }: SphereEnvironmentProps
   return (
     <mesh onPointerDown={onPointerDown}>
       <sphereGeometry args={[50, 64, 64]} />
-      <meshBasicMaterial map={texture} side={THREE.BackSide} />
+      <meshBasicMaterial map={texture} side={THREE.BackSide} toneMapped={false} />
     </mesh>
   );
 }
@@ -182,18 +228,18 @@ export interface Panorama360Props {
   /** Equirectangular JPG fallback. Used when `modelUrl` is not provided. */
   textureUrl?: string;
   hotspots?: HotspotData[];
+  /** Optional debug flag — logs bbox + mesh counts once on load. */
+  debug?: boolean;
 }
 
 export default function Panorama360({
   modelUrl = "/models/room-360.glb",
   textureUrl = "/room-360.jpg",
   hotspots = DEFAULT_HOTSPOTS,
+  debug = true,
 }: Panorama360Props) {
   const loggedRef = useRef(false);
 
-  // Coordinate logger — every click on the environment prints the exact
-  // intersection point, rounded to 3 decimals and pre-formatted so it
-  // drops straight into a <Hotspot/> position.
   const handleLog = (event: ThreeEvent<PointerEvent>) => {
     event.stopPropagation();
     const { x, y, z } = event.point;
@@ -217,25 +263,58 @@ export default function Panorama360({
     );
   };
 
+  const handleReady = (info: SceneInfo) => {
+    if (!debug) return;
+    // eslint-disable-next-line no-console
+    console.info(
+      `[Panorama360] GLB ready — meshes=${info.meshCount}, textures=${info.hasTextures}, bboxDiagonal=${info.diagonal.toFixed(3)}`,
+    );
+    if (!info.meshCount) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        "[Panorama360] GLB contains no meshes — falling back would be needed.",
+      );
+    }
+  };
+
   return (
     <div className="relative h-full w-full">
       <Canvas
-        camera={{ position: [0, 0.05, 0.01], fov: 75, near: 0.01, far: 1000 }}
-        gl={{ antialias: true, powerPreference: "high-performance" }}
+        // Initial camera pose is overwritten once the scene mounts (we
+        // recompute near/far + position against the GLB bbox). The large
+        // default `far` and small `near` prevent accidental clipping on
+        // scenes whose authoring units we don't know yet.
+        camera={{ position: [0, 0, 0.01], fov: 75, near: 0.001, far: 10000 }}
+        gl={{
+          antialias: true,
+          powerPreference: "high-performance",
+          toneMapping: THREE.NoToneMapping,
+          outputColorSpace: THREE.SRGBColorSpace,
+        }}
         className="h-full w-full"
       >
-        {/* Soft scene lighting so the GLB's materials read with some volume
-            even when the capture lacks baked lighting. */}
-        <ambientLight intensity={0.85} />
+        {/* Scene background is dark so any missing geometry still reads
+            as a solid void rather than transparent (which would show the
+            page bg through the canvas). */}
+        <color attach="background" args={["#050814"]} />
+
+        {/* Ambient + hemisphere fill so unlit materials that aren't our
+            MeshBasicMaterial swap-in (there shouldn't be any, but be
+            defensive) still get some light. */}
+        <ambientLight intensity={1} />
         <hemisphereLight
           color="#d8e3ff"
-          groundColor="#2a2f3a"
-          intensity={0.55}
+          groundColor="#0b1020"
+          intensity={0.8}
         />
 
         <Suspense fallback={null}>
           {modelUrl ? (
-            <SceneModel url={modelUrl} onPointerDown={handleLog} />
+            <SceneModel
+              url={modelUrl}
+              onPointerDown={handleLog}
+              onReady={handleReady}
+            />
           ) : (
             <SphereEnvironment
               textureUrl={textureUrl}

@@ -233,13 +233,16 @@ export const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
           const sdThetaOffset = SAN_DIEGO_LAT_RAD - BASE_THETA;
 
           const el = containerRef.current;
-          // Tightened timings for the landing → map cinematic: keep the
-          // two-stage feel but get the user to the 2.5D map in under 2s.
-          const stage1Duration = 900;
-          const stage2Duration = 800;
+          // Cinematic pacing: rotate the planet toward California first at
+          // a gentle speed (stage 1), then drift + zoom into the San Diego
+          // beacon for a proper fly-by (stage 2). We intentionally over-
+          // invest in stage 2 so the user can read the California coastline
+          // before slamming into the destination pin.
+          const stage1Duration = 1600;
+          const stage2Duration = 2400;
 
           if (el) {
-            el.style.transition = `transform ${stage1Duration}ms cubic-bezier(0.4, 0, 0.2, 1), filter ${stage1Duration}ms cubic-bezier(0.4, 0, 0.2, 1)`;
+            el.style.transition = `transform ${stage1Duration}ms cubic-bezier(0.33, 0, 0.2, 1), filter ${stage1Duration}ms cubic-bezier(0.33, 0, 0.2, 1)`;
             el.style.transform = "scale(1.35)";
             el.style.filter = "brightness(1.08) saturate(1.08)";
           }
@@ -262,9 +265,11 @@ export const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
             } else {
               if (!stage2Triggered && el) {
                 stage2Triggered = true;
-                el.style.transition = `transform ${stage2Duration}ms cubic-bezier(0.33, 0.02, 0.38, 1), filter ${stage2Duration}ms cubic-bezier(0.33, 0.02, 0.38, 1)`;
-                el.style.transform = "scale(3.1)";
-                el.style.filter = "brightness(1.18) saturate(1.18)";
+                // Stage 2 is the long fly-by: ease-out so it gently tightens
+                // onto the pin instead of snapping.
+                el.style.transition = `transform ${stage2Duration}ms cubic-bezier(0.22, 0.08, 0.25, 1), filter ${stage2Duration}ms cubic-bezier(0.22, 0.08, 0.25, 1)`;
+                el.style.transform = "scale(3.6)";
+                el.style.filter = "brightness(1.22) saturate(1.22)";
               }
               const s2 = Math.min(1, (elapsed - stage1Duration) / stage2Duration);
               const e2 = easeOutQuart(s2);
