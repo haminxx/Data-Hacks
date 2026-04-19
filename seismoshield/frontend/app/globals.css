@@ -1,3 +1,49 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Landing: slow concentric pulse (accent #1A56DB @ 8% opacity) */
+@keyframes landing-pulse-scale {
+  0%,
+  100% {
+    transform: scale(0.92);
+    opacity: 0.08;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.04;
+  }
+}
+
+.landing-pulse-bg {
+  overflow: hidden;
+}
+
+.landing-pulse-ring {
+  position: absolute;
+  aspect-ratio: 1;
+  width: min(85vw, 520px);
+  border-radius: 9999px;
+  border: 1px solid rgba(26, 86, 219, 0.08);
+  animation: landing-pulse-scale 14s ease-in-out infinite;
+}
+
+.landing-pulse-ring--1 {
+  animation-delay: 0s;
+  width: min(85vw, 520px);
+}
+
+.landing-pulse-ring--2 {
+  animation-delay: -3.5s;
+  width: min(95vw, 620px);
+}
+
+.landing-pulse-ring--3 {
+  animation-delay: -7s;
+  width: min(105vw, 720px);
+}
+
+.landing-pulse-ring--4 {
+  animation-delay: -10.5s;
+  width: min(115vw, 820px);
+}
