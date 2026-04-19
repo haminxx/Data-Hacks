@@ -1,0 +1,114 @@
+[
+  {
+    "magnitude": 4.0,
+    "epicenter_lat": 33.19,
+    "epicenter_lon": -115.54,
+    "depth_km": 8.25,
+    "pgv": 4.408689975738525,
+    "tier": "Low",
+    "color": "#84cc16",
+    "description": "Light shaking possible; minor nonstructural issues in vulnerable buildings.",
+    "building_tips": [
+      "Secure tall furniture and ceiling fixtures.",
+      "Inspect unreinforced masonry and brittle finishes after events."
+    ]
+  },
+  {
+    "magnitude": 4.5,
+    "epicenter_lat": 33.19,
+    "epicenter_lon": -115.54,
+    "depth_km": 8.25,
+    "pgv": 5.470529079437256,
+    "tier": "Low",
+    "color": "#84cc16",
+    "description": "Light shaking possible; minor nonstructural issues in vulnerable buildings.",
+    "building_tips": [
+      "Secure tall furniture and ceiling fixtures.",
+      "Inspect unreinforced masonry and brittle finishes after events."
+    ]
+  },
+  {
+    "magnitude": 5.0,
+    "epicenter_lat": 33.19,
+    "epicenter_lon": -115.54,
+    "depth_km": 8.25,
+    "pgv": 5.484268665313721,
+    "tier": "Low",
+    "color": "#84cc16",
+    "description": "Light shaking possible; minor nonstructural issues in vulnerable buildings.",
+    "building_tips": [
+      "Secure tall furniture and ceiling fixtures.",
+      "Inspect unreinforced masonry and brittle finishes after events."
+    ]
+  },
+  {
+    "magnitude": 5.5,
+    "epicenter_lat": 33.19,
+    "epicenter_lon": -115.54,
+    "depth_km": 8.25,
+    "pgv": 5.216352462768555,
+    "tier": "Low",
+    "color": "#84cc16",
+    "description": "Light shaking possible; minor nonstructural issues in vulnerable buildings.",
+    "building_tips": [
+      "Secure tall furniture and ceiling fixtures.",
+      "Inspect unreinforced masonry and brittle finishes after events."
+    ]
+  },
+  {
+    "magnitude": 6.0,
+    "epicenter_lat": 33.19,
+    "epicenter_lon": -115.54,
+    "depth_km": 8.25,
+    "pgv": 5.216352462768555,
+    "tier": "Low",
+    "color": "#84cc16",
+    "description": "Light shaking possible; minor nonstructural issues in vulnerable buildings.",
+    "building_tips": [
+      "Secure tall furniture and ceiling fixtures.",
+      "Inspect unreinforced masonry and brittle finishes after events."
+    ]
+  },
+  {
+    "magnitude": 6.5,
+    "epicenter_lat": 33.19,
+    "epicenter_lon": -115.54,
+    "depth_km": 8.25,
+    "pgv": 5.216352462768555,
+    "tier": "Low",
+    "color": "#84cc16",
+    "description": "Light shaking possible; minor nonstructural issues in vulnerable buildings.",
+    "building_tips": [
+      "Secure tall furniture and ceiling fixtures.",
+      "Inspect unreinforced masonry and brittle finishes after events."
+    ]
+  },
+  {
+    "magnitude": 7.0,
+    "epicenter_lat": 33.19,
+    "epicenter_lon": -115.54,
+    "depth_km": 8.25,
+    "pgv": 5.216352462768555,
+    "tier": "Low",
+    "color": "#84cc16",
+    "description": "Light shaking possible; minor nonstructural issues in vulnerable buildings.",
+    "building_tips": [
+      "Secure tall furniture and ceiling fixtures.",
+      "Inspect unreinforced masonry and brittle finishes after events."
+    ]
+  },
+  {
+    "magnitude": 7.5,
+    "epicenter_lat": 33.19,
+    "epicenter_lon": -115.54,
+    "depth_km": 8.25,
+    "pgv": 5.216352462768555,
+    "tier": "Low",
+    "color": "#84cc16",
+    "description": "Light shaking possible; minor nonstructural issues in vulnerable buildings.",
+    "building_tips": [
+      "Secure tall furniture and ceiling fixtures.",
+      "Inspect unreinforced masonry and brittle finishes after events."
+    ]
+  }
+]
