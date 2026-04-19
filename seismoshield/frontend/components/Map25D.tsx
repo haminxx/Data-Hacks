@@ -155,14 +155,25 @@ function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
+export type BuildingIndexEntry = {
+  id: string;
+  name: string;
+  category: string;
+  height: number;
+  lng: number;
+  lat: number;
+};
+
 interface Map25DProps {
   onBuildingSelect?: (target: StreetViewTarget | null) => void;
   selectedName?: string | null;
+  onBuildingsLoaded?: (buildings: BuildingIndexEntry[]) => void;
 }
 
 export default function Map25D({
   onBuildingSelect,
   selectedName = null,
+  onBuildingsLoaded,
 }: Map25DProps) {
   const [features, setFeatures] = useState<BuildingFeature[]>([]);
   const [viewState, setViewState] = useState<ViewState>(CAMPUS_VIEW);
@@ -171,6 +182,8 @@ export default function Map25D({
   const [ready, setReady] = useState(false);
   const onSelectRef = useRef(onBuildingSelect);
   onSelectRef.current = onBuildingSelect;
+  const onBuildingsLoadedRef = useRef(onBuildingsLoaded);
+  onBuildingsLoadedRef.current = onBuildingsLoaded;
 
   useEffect(() => {
     let cancelled = false;
@@ -181,8 +194,30 @@ export default function Map25D({
       })
       .then((gj) => {
         if (cancelled) return;
-        setFeatures(gj.features ?? []);
+        const feats = gj.features ?? [];
+        setFeatures(feats);
         setReady(true);
+        // Publish a lightweight index of named buildings so consumers can
+        // drive a search bar without re-fetching the GeoJSON themselves.
+        const index: BuildingIndexEntry[] = [];
+        const seenNames = new Set<string>();
+        for (const f of feats) {
+          const name = f.properties.name;
+          if (!name || name === "Building" || seenNames.has(name)) continue;
+          seenNames.add(name);
+          const ring = f.geometry.coordinates[0] as unknown as number[][];
+          const [lng, lat] = polygonCentroid(ring);
+          index.push({
+            id: f.properties.id,
+            name,
+            category: f.properties.category,
+            height: f.properties.height,
+            lng,
+            lat,
+          });
+        }
+        index.sort((a, b) => a.name.localeCompare(b.name));
+        onBuildingsLoadedRef.current?.(index);
       })
       .catch((err) => {
         if (!cancelled) {
@@ -202,6 +237,31 @@ export default function Map25D({
       transitionInterpolator: new FlyToInterpolator({ speed: 1.6 }),
     });
   }, []);
+
+  // When the parent sets a new `selectedName` (e.g. via the search bar), fly
+  // the camera to that building so the user gets visual confirmation.
+  const lastFlownNameRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!selectedName || features.length === 0) return;
+    if (lastFlownNameRef.current === selectedName) return;
+    const hit = features.find((f) => f.properties.name === selectedName);
+    if (!hit) return;
+    const ring = hit.geometry.coordinates[0] as unknown as number[][];
+    const [lng, lat] = polygonCentroid(ring);
+    lastFlownNameRef.current = selectedName;
+    setViewState((prev) => ({
+      ...prev,
+      longitude: clamp(lng, UCSD_BOUNDS.west, UCSD_BOUNDS.east),
+      latitude: clamp(lat, UCSD_BOUNDS.south, UCSD_BOUNDS.north),
+      zoom: Math.max(prev.zoom, 17.2),
+      pitch: 58,
+      bearing: prev.bearing,
+      minZoom: prev.minZoom,
+      maxZoom: prev.maxZoom,
+      transitionDuration: 1800,
+      transitionInterpolator: new FlyToInterpolator({ speed: 1.8 }),
+    }));
+  }, [selectedName, features]);
 
   const lightingEffect = useMemo(() => {
     const ambient = new AmbientLight({

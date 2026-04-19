@@ -3,7 +3,10 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { ArrowLeft } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+
+import { GooeySearchBar, type SearchableItem } from "@/components/GooeySearchBar";
+import type { BuildingIndexEntry } from "@/components/Map25D";
 import type { StreetViewTarget } from "@/components/StreetView";
 
 const Map25D = dynamic(() => import("@/components/Map25D"), {
@@ -19,14 +22,45 @@ const StreetView = dynamic(() => import("@/components/StreetView"), {
   ssr: false,
 });
 
+type BuildingSearchItem = SearchableItem & BuildingIndexEntry;
+
 export default function MapPage() {
   const [selected, setSelected] = useState<StreetViewTarget | null>(null);
+  const [buildings, setBuildings] = useState<BuildingIndexEntry[]>([]);
 
   const handleSelect = useCallback((target: StreetViewTarget | null) => {
     setSelected(target);
   }, []);
 
   const handleClose = useCallback(() => setSelected(null), []);
+
+  const handleBuildingsLoaded = useCallback((list: BuildingIndexEntry[]) => {
+    setBuildings(list);
+  }, []);
+
+  // Map raw building index into the SearchableItem shape the bar expects,
+  // stamping the category as the trailing meta label so each result row
+  // has a quick classifier (education, residential, athletic, …).
+  const searchItems = useMemo<BuildingSearchItem[]>(
+    () =>
+      buildings.map((b) => ({
+        ...b,
+        id: b.id,
+        label: b.name,
+        meta: b.category,
+      })),
+    [buildings],
+  );
+
+  const handleSearchPick = useCallback((item: BuildingSearchItem) => {
+    setSelected({
+      name: item.name,
+      height: item.height,
+      category: item.category,
+      lng: item.lng,
+      lat: item.lat,
+    });
+  }, []);
 
   const hasPanel = selected !== null;
 
@@ -41,7 +75,23 @@ export default function MapPage() {
           <Map25D
             onBuildingSelect={handleSelect}
             selectedName={selected?.name ?? null}
+            onBuildingsLoaded={handleBuildingsLoaded}
           />
+
+          {/* Top-centered search bar. pointer-events-none on the positioning
+              shell lets map drags / hovers pass through except where the bar
+              actually lives. */}
+          <div className="pointer-events-none absolute inset-x-0 top-5 z-20 flex justify-center">
+            <div className="pointer-events-auto">
+              <GooeySearchBar<BuildingSearchItem>
+                items={searchItems}
+                onSelect={handleSearchPick}
+                collapsedLabel="Search UCSD"
+                placeholder="e.g. Geisel, Price Center, RIMAC…"
+                maxResults={6}
+              />
+            </div>
+          </div>
 
           <Link
             href="/"
@@ -67,9 +117,7 @@ export default function MapPage() {
           }`}
           aria-hidden={!hasPanel}
         >
-          {hasPanel && (
-            <StreetView target={selected} onClose={handleClose} />
-          )}
+          {hasPanel && <StreetView target={selected} onClose={handleClose} />}
         </aside>
       </div>
     </main>

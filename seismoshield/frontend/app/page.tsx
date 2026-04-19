@@ -1,37 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { Globe, type GlobeHandle } from "@/components/Globe";
-
-const DEFAULT_ADDRESS = "9500 Gilman Dr, La Jolla, CA 92093";
-
-const FEATURE_PILLS = [
-  { emoji: "🌍", label: "Risk Assessment" },
-  { emoji: "🏗️", label: "3D Simulation" },
-  { emoji: "🚨", label: "Emergency Guidance" },
-];
-
-const FEATURES = [
-  {
-    icon: "🌍",
-    title: "Risk assessment",
-    body: "PGV-based tiers and building-specific guidance for your site.",
-  },
-  {
-    icon: "🏗️",
-    title: "Walkthrough simulator",
-    body: "Photo-based escape route with shake intensity tied to magnitude.",
-  },
-  {
-    icon: "🚨",
-    title: "Emergency mode",
-    body: "USGS-aware alerts and step-by-step Rec Gym safety (press D to demo).",
-  },
-] as const;
 
 export default function HomePage() {
   const router = useRouter();
@@ -68,7 +41,7 @@ export default function HomePage() {
       />
 
       <section
-        className={`relative mx-auto flex min-h-screen max-w-7xl flex-col-reverse items-center justify-between gap-12 px-6 pb-16 pt-28 transition-opacity duration-500 md:flex-row md:px-12 md:pb-24 md:pt-32 ${
+        className={`relative mx-auto flex min-h-screen max-w-7xl flex-col-reverse items-center justify-center gap-12 px-6 pb-16 pt-28 transition-opacity duration-500 md:flex-row md:px-12 md:pb-24 md:pt-32 ${
           flying ? "opacity-[0.92]" : ""
         }`}
       >
@@ -88,68 +61,22 @@ export default function HomePage() {
           <h1 className="text-4xl font-semibold leading-tight tracking-tight text-white sm:text-5xl md:text-6xl">
             Seismo<span className="text-[#1A56DB]">Shield</span>
           </h1>
-          <p className="mt-4 text-lg leading-relaxed text-white/80 md:text-xl">
+          <p className="mt-5 text-lg leading-relaxed text-white/80 md:text-xl">
             We know your building. We know your risk. We get you out safely.
           </p>
-          <p className="mt-3 max-w-md text-sm leading-relaxed text-white/50">
-            AI-driven earthquake risk assessment, 3D building simulation, and
-            step-by-step emergency guidance — powered by Scripps Institution of
-            Oceanography data.
-          </p>
 
-          <div className="mt-8 w-full max-w-md">
-            <label
-              htmlFor="building-address"
-              className="mb-2 block text-left text-xs font-medium text-white/50"
-            >
-              Target building
-            </label>
-            <input
-              id="building-address"
-              name="address"
-              type="text"
-              defaultValue={DEFAULT_ADDRESS}
-              className="w-full rounded-xl border border-white/10 bg-white/[0.06] px-4 py-3.5 text-left text-sm text-white shadow-inner backdrop-blur-sm placeholder:text-white/35 transition-colors focus:border-[#1A56DB]/50 focus:outline-none focus:ring-2 focus:ring-[#1A56DB]/35 sm:text-[15px]"
-              autoComplete="street-address"
-            />
-          </div>
-
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <div className="mt-9">
             <button
               type="button"
               onClick={handleLaunchDemo}
               disabled={flying}
-              className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-full bg-[#1A56DB] px-7 py-3 text-base font-semibold text-white shadow-lg shadow-[#1A56DB]/25 transition hover:bg-[#1647b3] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1A56DB] disabled:cursor-not-allowed disabled:opacity-70 sm:flex-none"
+              className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-[#1A56DB] px-8 py-3 text-base font-semibold text-white shadow-lg shadow-[#1A56DB]/25 transition hover:bg-[#1647b3] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1A56DB] disabled:cursor-not-allowed disabled:opacity-70"
             >
               {flying ? "Flying over California…" : "Launch Demo"}
               <ArrowRight
                 className={`h-4 w-4 transition-transform ${flying ? "translate-x-1" : ""}`}
               />
             </button>
-            <Link
-              href="/exterior"
-              className="inline-flex min-h-[48px] flex-1 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] px-6 py-3 text-center text-base font-semibold text-white/90 transition hover:bg-white/[0.08] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/30 sm:flex-none"
-            >
-              Building analysis
-            </Link>
-            <Link
-              href="/simulator"
-              className="inline-flex min-h-[48px] flex-1 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] px-6 py-3 text-center text-base font-semibold text-white/90 transition hover:bg-white/[0.08] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/30 sm:flex-none"
-            >
-              Open simulator
-            </Link>
-          </div>
-
-          <div className="mt-8 flex flex-wrap gap-2">
-            {FEATURE_PILLS.map((pill) => (
-              <span
-                key={pill.label}
-                className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/85 backdrop-blur sm:text-sm"
-              >
-                <span aria-hidden>{pill.emoji}</span>
-                {pill.label}
-              </span>
-            ))}
           </div>
         </div>
 
@@ -160,38 +87,6 @@ export default function HomePage() {
           />
         </div>
       </section>
-
-      <section className="relative border-t border-white/[0.06] bg-[#0B1220]/80 px-6 py-14 md:px-12">
-        <ul className="mx-auto grid max-w-5xl gap-4 sm:grid-cols-3">
-          {FEATURES.map((f) => (
-            <li
-              key={f.title}
-              className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-4 text-center shadow-lg shadow-black/20 backdrop-blur-sm transition hover:border-[#1A56DB]/25 hover:bg-white/[0.06]"
-            >
-              <span className="text-2xl" aria-hidden>
-                {f.icon}
-              </span>
-              <h2 className="mt-2 text-sm font-semibold text-white">{f.title}</h2>
-              <p className="mt-1.5 text-xs leading-relaxed text-white/55">
-                {f.body}
-              </p>
-            </li>
-          ))}
-        </ul>
-        <p className="mx-auto mt-10 max-w-md text-center text-[11px] leading-relaxed text-white/35">
-          Salton Sea M6.5 scenario · FastAPI + Next.js · Press{" "}
-          <kbd className="rounded border border-white/15 bg-white/5 px-1.5 py-0.5 font-mono text-[10px] text-white/50">
-            D
-          </kbd>{" "}
-          anywhere for emergency drill
-        </p>
-      </section>
-
-      <div className="pointer-events-none flex justify-center pb-6 pt-2">
-        <p className="text-[11px] uppercase tracking-[0.18em] text-white/30">
-          DataHacks @ UCSD · SeismoShield
-        </p>
-      </div>
 
       {/* Cross-fade overlay: fades to navy as we route to /map */}
       <div
