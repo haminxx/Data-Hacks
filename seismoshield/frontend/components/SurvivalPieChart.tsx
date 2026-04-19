@@ -4,6 +4,7 @@ type SurvivalPieChartProps = {
   survivalRate: number;
   isAnimating: boolean;
   animationDirection: "up" | "down" | null;
+  size?: number;
 };
 
 const RADIUS = 52.5;
@@ -30,15 +31,22 @@ export default function SurvivalPieChart({
   survivalRate,
   isAnimating,
   animationDirection,
+  size = 140,
 }: SurvivalPieChartProps) {
   const clamped = Math.max(0, Math.min(100, Math.round(survivalRate)));
   const dashOffset = CIRCUMFERENCE * (1 - clamped / 100);
   const color = arcColor(clamped);
   const status = statusText(clamped);
+  const percentFontSize = Math.round(size * 0.2);
+  const labelFontSize = Math.max(9, Math.round(size * 0.075));
+  const statusFontSize = Math.max(12, Math.round(size * 0.1));
 
   return (
     <div className="flex flex-col items-center">
-      <div className="relative h-[140px] w-[140px]">
+      <div
+        className="relative"
+        style={{ width: `${size}px`, height: `${size}px` }}
+      >
         <svg viewBox="0 0 140 140" className="h-full w-full">
           <circle
             cx="70"
@@ -68,10 +76,16 @@ export default function SurvivalPieChart({
         </svg>
 
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-[28px] font-black leading-none text-white">
+          <span
+            className="font-black leading-none text-white"
+            style={{ fontSize: `${percentFontSize}px` }}
+          >
             {clamped}%
           </span>
-          <span className="mt-1 text-[10px] tracking-[0.2em] text-slate-400">
+          <span
+            className="mt-1 tracking-[0.2em] text-slate-400"
+            style={{ fontSize: `${labelFontSize}px` }}
+          >
             SURVIVAL
           </span>
         </div>
@@ -88,7 +102,10 @@ export default function SurvivalPieChart({
         )}
       </div>
 
-      <div className={`mt-3 text-sm font-semibold ${status.cls}`}>
+      <div
+        className={`mt-3 font-semibold ${status.cls}`}
+        style={{ fontSize: `${statusFontSize}px` }}
+      >
         {status.text}
       </div>
     </div>

@@ -46,65 +46,90 @@ export default function QuestionCard({
 
   return (
     <aside
-      className="fixed z-30 overflow-y-auto text-white md:right-4 md:top-20 md:bottom-4 md:w-[340px] md:max-h-[calc(100vh-96px)] md:p-6 right-2 left-2 bottom-2 w-auto max-h-[56vh] p-3.5 md:left-auto md:bottom-auto"
+      className="sim-question-card fixed z-30 flex flex-col overflow-y-auto text-white right-2 left-2 w-auto p-2.5 max-h-[38vh] md:left-auto md:right-4 md:top-20 md:bottom-4 md:w-[300px] md:max-h-none md:p-4"
       style={{
         background: "rgba(10,15,30,0.92)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
         border: "1px solid rgba(255,255,255,0.08)",
-        borderRadius: 18,
+        borderRadius: 14,
       }}
     >
-      {/* Mobile shrinks the survival pie so it doesn't dominate the
-          sheet. Desktop keeps the 140px proportion from the mock. */}
-      <div className="flex justify-center [&>div>div]:h-[96px] [&>div>div]:w-[96px] md:[&>div>div]:h-[140px] md:[&>div>div]:w-[140px]">
+      {/* Desktop-only: big survival donut anchored to the TOP of the
+          card as the focal element. Mobile keeps a small inline donut
+          beside the meta strip below so the bottom-sheet stays short. */}
+      <div className="sim-pie-top hidden pb-4 md:flex md:flex-col md:items-center">
         <SurvivalPieChart
           survivalRate={survivalRate}
           isAnimating={isAnimating}
           animationDirection={animationDirection}
+          size={200}
         />
+        <div className="mt-4 w-full border-t border-white/10" />
       </div>
 
-      <div className="my-3 border-t border-white/10 md:my-4" />
-
-      <div className="mb-3 flex flex-wrap items-center gap-1.5 text-xs">
-        <span>🧭</span>
-        <span className="uppercase tracking-wider text-slate-500">
-          You are facing:
-        </span>
-        <span className="font-semibold text-blue-400">
-          {shortZoneLabel(zone.label)}
-        </span>
-      </div>
-
-      <div className="mb-3 flex items-center justify-between">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-400">
-          ❓ Question {questionNumber} of {totalQuestions}
+      {/* Meta strip: zone + question number / progress dots. Mobile
+          shows a compact inline donut on the left; desktop hides it
+          since the big donut already lives at the top. */}
+      <div className="flex items-center gap-3 md:gap-0">
+        <div className="sim-pie-compact shrink-0 md:hidden">
+          <SurvivalPieChart
+            survivalRate={survivalRate}
+            isAnimating={isAnimating}
+            animationDirection={animationDirection}
+          />
         </div>
-        <div className="flex gap-1.5">
-          {Array.from({ length: totalQuestions }).map((_, i) => {
-            const isReached = i + 1 <= questionNumber;
-            return (
-              <div
-                key={i}
-                className="h-1.5 w-1.5 rounded-full transition-colors duration-300"
-                style={{
-                  background: isReached ? "#1A56DB" : "rgba(51,65,85,0.8)",
-                }}
-              />
-            );
-          })}
+
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <div className="flex flex-wrap items-center gap-1 text-[11px] md:text-xs">
+            <span className="hidden md:inline">🧭</span>
+            <span className="uppercase tracking-wider text-slate-500">
+              Facing:
+            </span>
+            <span className="font-semibold text-blue-400">
+              {shortZoneLabel(zone.label)}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-400 md:text-[11px]">
+              <span className="md:hidden">
+                Q {questionNumber}/{totalQuestions}
+              </span>
+              <span className="hidden md:inline">
+                Q {questionNumber} of {totalQuestions}
+              </span>
+            </div>
+            <div className="flex gap-1">
+              {Array.from({ length: totalQuestions }).map((_, i) => {
+                const isReached = i + 1 <= questionNumber;
+                return (
+                  <div
+                    key={i}
+                    className="h-1.5 w-1.5 rounded-full transition-colors duration-300"
+                    style={{
+                      background: isReached
+                        ? "#1A56DB"
+                        : "rgba(51,65,85,0.8)",
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
+
+      <div className="my-2.5 border-t border-white/10 md:my-3" />
 
       <p
-        className="mb-3 text-[13px] font-medium text-white md:mb-4 md:text-[15px]"
-        style={{ lineHeight: 1.55 }}
+        className="mb-2 text-[12.5px] font-medium text-white md:mb-3 md:text-[14px]"
+        style={{ lineHeight: 1.5 }}
       >
         {question.text}
       </p>
 
-      <div className="flex flex-col gap-1.5 md:gap-2">
+      <div className="flex flex-col gap-1 md:gap-2">
         {question.options.map((option, index) => {
           const correct = answered && index === question.correctIndex;
           const wrongPicked =
@@ -129,7 +154,7 @@ export default function QuestionCard({
               type="button"
               disabled={answered}
               onClick={() => onAnswer(index)}
-              className={`group w-full rounded-[12px] px-3 py-2.5 text-left transition-all duration-200 md:px-4 md:py-[14px] ${
+              className={`group w-full rounded-[10px] px-2.5 py-1.5 text-left transition-all duration-200 md:rounded-[12px] md:px-4 md:py-[14px] ${
                 answered
                   ? "cursor-not-allowed"
                   : "cursor-pointer hover:!bg-slate-700/80"
@@ -137,8 +162,8 @@ export default function QuestionCard({
               style={baseStyle}
             >
               <div
-                className="flex items-start gap-2 text-[14px]"
-                style={{ lineHeight: 1.4 }}
+                className="flex items-start gap-2 text-[12.5px] md:text-[14px]"
+                style={{ lineHeight: 1.35 }}
               >
                 <span className="font-semibold text-slate-500">
                   {LETTERS[index]})

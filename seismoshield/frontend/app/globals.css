@@ -765,3 +765,51 @@
 .shake-strong { animation: shakeStrong 0.9s ease-in-out; }
 .shake-severe { animation: shakeSevere 1.0s ease-in-out; }
 .shake-extreme { animation: shakeExtreme 1.2s ease-in-out; }
+
+/* Simulator QuestionCard — safe-area-aware bottom on phones so iOS
+   Safari's browser chrome (URL bar + home indicator) never clips the
+   card. Scoped to the phone breakpoint so desktop's md:bottom-auto
+   keeps the card pinned to the sidebar. */
+@media (max-width: 767px) {
+  .sim-question-card {
+    bottom: max(0.5rem, calc(env(safe-area-inset-bottom) + 0.5rem));
+  }
+}
+
+/* Compact survival pie used inside the QuestionCard header. The
+   default SurvivalPieChart renders a 140×140 donut with a tier label
+   underneath ("⚠ Moderate Risk"). Inside the QuestionCard we already
+   show "Facing:" + question metadata next to it, so the tier label
+   is redundant and just adds vertical space. We also constrain the
+   donut to 72/64px depending on viewport so the header row reads as
+   a tight stat block, not a dominant graphic. */
+.sim-pie-compact > div {
+  gap: 0 !important;
+}
+.sim-pie-compact > div > div:first-child {
+  height: 72px !important;
+  width: 72px !important;
+}
+.sim-pie-compact > div > div:first-child span:first-child {
+  font-size: 18px !important;
+}
+.sim-pie-compact > div > div:first-child span:nth-child(2) {
+  font-size: 7px !important;
+  margin-top: 2px !important;
+  letter-spacing: 0.15em !important;
+}
+.sim-pie-compact > div > div:last-child {
+  display: none !important;
+}
+@media (max-width: 767px) {
+  .sim-pie-compact > div > div:first-child {
+    height: 60px !important;
+    width: 60px !important;
+  }
+  .sim-pie-compact > div > div:first-child span:first-child {
+    font-size: 15px !important;
+  }
+  .sim-pie-compact > div > div:first-child span:nth-child(2) {
+    font-size: 6px !important;
+  }
+}

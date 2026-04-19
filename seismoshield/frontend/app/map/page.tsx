@@ -181,7 +181,7 @@ export default function MapPage() {
           shell lets map drags / hovers pass through except where the bar
           actually lives. Hidden during the street-view phase. */}
       <div
-        className={`pointer-events-none absolute inset-x-0 top-5 z-20 flex justify-center transition-opacity duration-500 ${
+        className={`pointer-events-none absolute inset-x-0 z-20 flex justify-center transition-opacity duration-500 top-[max(4.75rem,calc(env(safe-area-inset-top)+4.5rem))] sm:top-5 ${
           isStreet ? "opacity-0" : "opacity-100"
         }`}
       >
@@ -195,26 +195,22 @@ export default function MapPage() {
         </div>
       </div>
 
-      {/* Back-to-globe pill. Always visible on phone (44px tap target,
-          safe-area-aware bottom offset so it clears iOS home indicator),
-          and gracefully collapses to just the chevron icon on very
-          narrow screens so it never crowds the map. Hidden only during
-          the full-screen pano because the Street View close button
-          sits in the same quadrant. */}
+      {/* Back-to-globe pill. On phones we pin it to the TOP-left so it
+          always clears iOS Safari's bottom chrome (URL bar, tab row,
+          home indicator). From sm+ we drop it back to the bottom-left
+          where the marketing shots expect it. 44px tap target,
+          safe-area-aware. Hidden only during the full-screen pano
+          because the Street View close button sits in the same
+          quadrant. */}
       <Link
         href="/"
         aria-label="Back to globe"
-        className={`group absolute z-20 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/70 px-4 py-2.5 text-[13px] font-medium text-white shadow-[0_14px_40px_-12px_rgba(0,0,0,0.65)] backdrop-blur-md transition-all duration-300 hover:bg-black/85 active:scale-95 sm:bottom-6 sm:left-4 sm:text-sm ${
+        className={`group absolute z-20 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/70 px-4 py-2.5 text-[13px] font-medium text-white shadow-[0_14px_40px_-12px_rgba(0,0,0,0.65)] backdrop-blur-md transition-all duration-300 hover:bg-black/85 active:scale-95 left-3 top-[max(0.75rem,calc(env(safe-area-inset-top)+0.5rem))] bottom-auto sm:top-auto sm:bottom-6 sm:left-4 sm:text-sm ${
           isStreet
             ? "pointer-events-none translate-y-2 opacity-0"
             : "translate-y-0 opacity-100"
         }`}
-        style={{
-          left: "max(0.75rem, env(safe-area-inset-left))",
-          bottom:
-            "max(1rem, calc(env(safe-area-inset-bottom) + 0.5rem))",
-          minHeight: 44,
-        }}
+        style={{ minHeight: 44 }}
       >
         <ArrowLeft className="h-4 w-4 shrink-0 transition-transform group-hover:-translate-x-0.5" />
         <span className="whitespace-nowrap">Back to Globe</span>

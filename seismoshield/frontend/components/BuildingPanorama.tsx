@@ -119,11 +119,14 @@ export default function BuildingPanorama({
 
               {/* "Enter the building" CTA — sits low-centre so it never
                   covers the framed subject in the equirectangular photo.
+                  On mobile we lift it well above iOS Safari's bottom
+                  chrome (URL bar + tabs) so the button never slips under
+                  the browser UI; desktop keeps the tighter `bottom-12`.
                   The aura ring and shimmer are pure CSS so the button
                   reads as a premium call-to-action even against a
                   high-contrast outdoor scene. */}
               <motion.div
-                className="pointer-events-none absolute inset-x-0 bottom-8 z-10 flex justify-center px-6 sm:bottom-12"
+                className="pointer-events-none absolute inset-x-0 bottom-[max(6rem,calc(env(safe-area-inset-bottom)+5.5rem))] z-10 flex justify-center px-6 sm:bottom-12"
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.25, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
