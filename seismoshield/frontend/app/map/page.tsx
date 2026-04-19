@@ -29,19 +29,19 @@ const BuildingPanorama = dynamic(
 
 type BuildingSearchItem = SearchableItem &
   BuildingIndexEntry & {
-    /** Marks a synthetic row that opens a GLB panorama instead of
-     *  Google Street View (e.g. the hard-wired HSS hotkey). */
-    panoramaMode?: "street" | "glb";
-    glbUrl?: string;
+    /** Marks a synthetic row that opens an in-map 360° overlay instead
+     *  of Google Street View (e.g. the hard-wired HSS hotkey). */
+    panoramaMode?: "street" | "pano";
+    panoramaTextureUrl?: string;
   };
 type Phase = "idle" | "flying" | "street";
 
 // Hard-wired entry: typing any substring of "HSS" or "Humanities"
 // surfaces this as a search result. Picking it flies the map to the
-// building's centroid, then opens the in-map GLB 360° overlay instead
-// of Google Street View. Coordinates are approximate UCSD HSS.
+// building's centroid, then opens the in-map 360° overlay instead of
+// Google Street View. Coordinates are approximate UCSD HSS.
 const HSS_HOTKEY: BuildingSearchItem = {
-  id: "hss-glb-pano",
+  id: "hss-pano",
   name: "Humanities and Social Sciences Building",
   label: "Humanities and Social Sciences Building",
   meta: "HSS · 360°",
@@ -49,8 +49,8 @@ const HSS_HOTKEY: BuildingSearchItem = {
   height: 18,
   lng: -117.2416,
   lat: 32.8837,
-  panoramaMode: "glb",
-  glbUrl: "/models/room-360.glb",
+  panoramaMode: "pano",
+  panoramaTextureUrl: "/pano/hss-360.png",
 };
 
 // Keep this in sync with the flyToBuilding transition inside <Map25D/>.
@@ -121,7 +121,7 @@ export default function MapPage() {
       lng: item.lng,
       lat: item.lat,
       panoramaMode: item.panoramaMode,
-      glbUrl: item.glbUrl,
+      panoramaTextureUrl: item.panoramaTextureUrl,
     });
   }, []);
 
@@ -210,7 +210,7 @@ export default function MapPage() {
         }`}
         aria-hidden={!isStreet}
       >
-        {selected && selected.panoramaMode === "glb" ? (
+        {selected && selected.panoramaMode === "pano" ? (
           <BuildingPanorama target={selected} onClose={handleClose} />
         ) : selected ? (
           <StreetView target={selected} onClose={handleClose} />

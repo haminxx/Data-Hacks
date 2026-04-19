@@ -318,15 +318,19 @@ export function GooeySearchBar<T extends SearchableItem>({
     };
   }, [debounced, items, maxResults]);
 
-  // Collapse on click-outside / Escape.
+  // Collapse on click-outside / Escape. We attach in the CAPTURE phase so
+  // nested components (deck.gl's canvas, three.js canvases, etc.) can't
+  // swallow the event with stopPropagation before we see it.
   useEffect(() => {
     if (step !== 2) return;
-    const onDocClick = (e: MouseEvent) => {
-      if (!wrapperRef.current) return;
-      if (!wrapperRef.current.contains(e.target as Node)) setStep(1);
+    const onDocPointerDown = (e: PointerEvent) => {
+      const w = wrapperRef.current;
+      if (!w) return;
+      if (!w.contains(e.target as Node)) setStep(1);
     };
-    window.addEventListener("mousedown", onDocClick);
-    return () => window.removeEventListener("mousedown", onDocClick);
+    window.addEventListener("pointerdown", onDocPointerDown, true);
+    return () =>
+      window.removeEventListener("pointerdown", onDocPointerDown, true);
   }, [step]);
 
   const handleButtonClick = () => {

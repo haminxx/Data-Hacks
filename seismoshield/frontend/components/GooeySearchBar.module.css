@@ -9,10 +9,10 @@
   display: inline-flex;
   justify-content: center;
   align-items: flex-start;
-  /* Pad below so that absolute-positioned result rows emerging out of
-     the pill aren't clipped by an ancestor with overflow:hidden. */
-  padding-bottom: 460px;
-  margin-bottom: -460px;
+  /* No padding hack — result rows are absolutely positioned and don't
+     need space reserved in the parent. The previous 460px pad was
+     silently eating mouse drags over the map below the pill, which
+     read as "lag" when trying to pan. */
 }
 
 .buttonContent {

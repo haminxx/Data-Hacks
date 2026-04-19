@@ -15,7 +15,9 @@ const Panorama360 = dynamic(() => import("@/components/Panorama360"), {
 export default function SimulatorPage() {
   return (
     <div className="relative mt-16 h-[calc(100vh-4rem)] w-full overflow-hidden bg-[#050814]">
-      <Panorama360 />
+      {/* Equirectangular panorama on an inverted sphere — lightweight
+          drop-in texture instead of a streamed GLB. */}
+      <Panorama360 modelUrl={null} textureUrl="/pano/hss-360.png" />
 
       <div className="pointer-events-none absolute left-4 top-4 z-20 max-w-xs rounded-2xl border border-white/10 bg-black/55 p-4 text-white backdrop-blur">
         <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/55">

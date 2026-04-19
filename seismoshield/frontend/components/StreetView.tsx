@@ -10,10 +10,12 @@ export type StreetViewTarget = {
   lat: number;
   height?: number;
   category?: string;
-  /** When "glb", callers should render <BuildingPanorama/> instead of
+  /** When "pano", callers should render <BuildingPanorama/> instead of
    *  Google Street View. Defaults to "street" when omitted. */
-  panoramaMode?: "street" | "glb";
-  /** Optional GLB URL used when panoramaMode === "glb". */
+  panoramaMode?: "street" | "pano";
+  /** Equirectangular panorama image to render inside the overlay. */
+  panoramaTextureUrl?: string;
+  /** Optional GLB url. Falls back when panoramaTextureUrl is missing. */
   glbUrl?: string;
 };
 

@@ -223,9 +223,10 @@ function LoadingBadge() {
 // ---------------------------------------------------------------------------
 
 export interface Panorama360Props {
-  /** GLB URL. When set, renders the 3D scene captured in the file. */
-  modelUrl?: string;
-  /** Equirectangular JPG fallback. Used when `modelUrl` is not provided. */
+  /** GLB URL. When set, renders the 3D scene captured in the file. Pass
+   *  `null` to force texture-only rendering even if a default exists. */
+  modelUrl?: string | null;
+  /** Equirectangular image. Used when `modelUrl` is null / undefined. */
   textureUrl?: string;
   hotspots?: HotspotData[];
   /** Optional debug flag — logs bbox + mesh counts once on load. */
@@ -233,10 +234,10 @@ export interface Panorama360Props {
 }
 
 export default function Panorama360({
-  modelUrl = "/models/room-360.glb",
-  textureUrl = "/room-360.jpg",
+  modelUrl,
+  textureUrl = "/pano/hss-360.png",
   hotspots = DEFAULT_HOTSPOTS,
-  debug = true,
+  debug = false,
 }: Panorama360Props) {
   const loggedRef = useRef(false);
 
@@ -342,6 +343,3 @@ export default function Panorama360({
   );
 }
 
-// Pre-warm the GLTF loader so the cached version is available when the
-// component mounts.
-useGLTF.preload("/models/room-360.glb");

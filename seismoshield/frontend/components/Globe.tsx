@@ -108,11 +108,14 @@ export const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
   }, []);
 
   useEffect(() => {
+    // Sensitivity tuning: 180 / 450 gives a snappier grab than the old
+    // 300 / 1000 defaults. Theta is deliberately less sensitive than phi
+    // so accidental vertical drags don't flip the globe upside-down.
     const handlePointerMove = (e: PointerEvent) => {
       if (pointerInteracting.current !== null) {
         dragOffsetRef.current = {
-          phi: (e.clientX - pointerInteracting.current.x) / 300,
-          theta: (e.clientY - pointerInteracting.current.y) / 1000,
+          phi: (e.clientX - pointerInteracting.current.x) / 180,
+          theta: (e.clientY - pointerInteracting.current.y) / 450,
         };
       }
     };
@@ -233,18 +236,18 @@ export const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
           const sdThetaOffset = SAN_DIEGO_LAT_RAD - BASE_THETA;
 
           const el = containerRef.current;
-          // Cinematic pacing: rotate the planet toward California first at
-          // a gentle speed (stage 1), then drift + zoom into the San Diego
-          // beacon for a proper fly-by (stage 2). We intentionally over-
-          // invest in stage 2 so the user can read the California coastline
-          // before slamming into the destination pin.
-          const stage1Duration = 1600;
-          const stage2Duration = 2400;
+          // Cinematic is now rotation-only: rotate the planet toward
+          // California (stage 1), drift onto the San Diego beacon
+          // (stage 2). No dramatic zoom — the container stays put and
+          // the transition to /map is handled by a slow cross-fade in
+          // the parent page while these rotations run.
+          const stage1Duration = 1400;
+          const stage2Duration = 1800;
 
           if (el) {
-            el.style.transition = `transform ${stage1Duration}ms cubic-bezier(0.33, 0, 0.2, 1), filter ${stage1Duration}ms cubic-bezier(0.33, 0, 0.2, 1)`;
-            el.style.transform = "scale(1.35)";
-            el.style.filter = "brightness(1.08) saturate(1.08)";
+            el.style.transition = `filter ${stage1Duration}ms cubic-bezier(0.33, 0, 0.2, 1)`;
+            el.style.transform = "";
+            el.style.filter = "brightness(1.06) saturate(1.08)";
           }
 
           const start = performance.now();
@@ -265,11 +268,11 @@ export const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
             } else {
               if (!stage2Triggered && el) {
                 stage2Triggered = true;
-                // Stage 2 is the long fly-by: ease-out so it gently tightens
-                // onto the pin instead of snapping.
-                el.style.transition = `transform ${stage2Duration}ms cubic-bezier(0.22, 0.08, 0.25, 1), filter ${stage2Duration}ms cubic-bezier(0.22, 0.08, 0.25, 1)`;
-                el.style.transform = "scale(3.6)";
-                el.style.filter = "brightness(1.22) saturate(1.22)";
+                // Stage 2: rotate into San Diego while the globe stays
+                // in place. We lift the brightness slightly so the fly-by
+                // still feels "approach-y" without any scale change.
+                el.style.transition = `filter ${stage2Duration}ms cubic-bezier(0.22, 0.08, 0.25, 1)`;
+                el.style.filter = "brightness(1.15) saturate(1.18)";
               }
               const s2 = Math.min(1, (elapsed - stage1Duration) / stage2Duration);
               const e2 = easeOutQuart(s2);

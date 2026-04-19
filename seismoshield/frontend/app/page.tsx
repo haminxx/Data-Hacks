@@ -6,14 +6,14 @@ import { useEffect, useRef, useState } from "react";
 
 import { Globe, type GlobeHandle } from "@/components/Globe";
 
-// Timings for the click → /map cinematic. The flyTo inside <Globe/> now
-// runs 1600ms (rotate to California) + 2400ms (fly-by + zoom to the San
-// Diego beacon) = 4000ms. The globe container expands in parallel; the
-// cross-fade is held back to the very end so the user gets the full
-// fly-by before the dissolve. /map is prefetched so the route is instant.
-const EXPAND_MS = 3600;
-const FADE_IN_AT_MS = 3650;
-const ROUTE_AT_MS = 4000;
+// Timings for the click → /map cinematic. The flyTo inside <Globe/>
+// runs 1400ms (rotate to California) + 1800ms (rotate onto the San
+// Diego beacon) = 3200ms total, rotation-only. We start a SLOW fade
+// to /map about halfway through so the hand-off happens while the
+// globe is still rotating — no zoom, no hard cut.
+const FADE_DURATION_MS = 1800;
+const FADE_IN_AT_MS = 1400;
+const ROUTE_AT_MS = 3200;
 
 export default function HomePage() {
   const router = useRouter();
@@ -105,45 +105,29 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Globe container. Always `fixed` so the morph between its
-           resting "bottom-right overflow" pose and the full-screen pose
-           animates cleanly via transform + width/height only. */}
+      {/* ── Globe container. Stays parked in the hero-card's bottom-right
+           corner throughout the cinematic — no zoom / fullscreen morph.
+           The rotation is the primary motion, the cross-fade below is the
+           primary transition. */}
       <div
-        className="pointer-events-none fixed z-30 ease-[cubic-bezier(0.16,1,0.3,1)]"
-        style={{
-          transition: `left ${EXPAND_MS}ms, top ${EXPAND_MS}ms, right ${EXPAND_MS}ms, bottom ${EXPAND_MS}ms, width ${EXPAND_MS}ms, height ${EXPAND_MS}ms, transform ${EXPAND_MS}ms`,
-          ...(flying
-            ? {
-                left: "50%",
-                top: "50%",
-                width: "130vmax",
-                height: "130vmax",
-                transform: "translate(-50%, -50%) scale(1)",
-              }
-            : {
-                // Parked at the bottom-right of the viewport (which
-                // visually sits inside the hero card's bottom-right
-                // overflow zone) at a comfortable desktop size.
-                right: "-14rem",
-                bottom: "-10rem",
-                width: "620px",
-                height: "620px",
-                transform: "scale(1.1)",
-              }),
-        }}
+        className="pointer-events-none fixed right-[-14rem] bottom-[-10rem] z-30 h-[620px] w-[620px]"
+        style={{ transform: "scale(1.1)" }}
       >
         <div className="pointer-events-auto h-full w-full">
           <Globe ref={globeRef} className="h-full w-full" />
         </div>
       </div>
 
-      {/* Cross-fade overlay — starts ~FADE_IN_AT_MS after click so the
-          camera has time to land on San Diego before the dissolve. */}
+      {/* Slow cross-fade. Starts while the globe is still rotating, so
+          the map screen gradually reveals as if the camera is pulling
+          back through the atmosphere. */}
       <div
         aria-hidden
-        className={`pointer-events-none fixed inset-0 z-40 bg-[#0F172A] transition-opacity duration-500 ${
-          fadeOut ? "opacity-100" : "opacity-0"
-        }`}
+        className="pointer-events-none fixed inset-0 z-40 bg-[#0F172A]"
+        style={{
+          opacity: fadeOut ? 1 : 0,
+          transition: `opacity ${FADE_DURATION_MS}ms cubic-bezier(0.4, 0, 0.2, 1)`,
+        }}
       />
     </div>
   );

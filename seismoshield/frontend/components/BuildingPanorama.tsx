@@ -21,23 +21,25 @@ interface BuildingPanoramaProps {
 }
 
 /**
- * In-map 360° panorama for custom GLB-backed buildings (e.g. UCSD HSS).
- * Visually it mirrors the Street View chrome — same header with name,
- * coordinates, and close affordance — so the interaction feels continuous
- * with the Google-powered panes used for other buildings.
+ * In-map 360° panorama for buildings that we have our own interior
+ * capture of (e.g. UCSD HSS). Visually mirrors the Street View chrome —
+ * same header with name, coordinates, and close affordance — so the
+ * interaction feels continuous with the Google-powered panes used for
+ * the rest of campus.
  */
 export default function BuildingPanorama({
   target,
   onClose,
 }: BuildingPanoramaProps) {
-  const glbUrl = target.glbUrl ?? "/models/room-360.glb";
+  const textureUrl = target.panoramaTextureUrl ?? "/pano/hss-360.png";
+  const glbUrl = target.glbUrl ?? null;
 
   return (
     <aside className="relative flex h-full w-full flex-col border-l border-white/10 bg-[#0B1324] text-white">
       <header className="flex items-start justify-between gap-3 border-b border-white/10 bg-[#0F172A]/80 px-4 py-3 backdrop-blur">
         <div className="min-w-0">
           <p className="text-[10px] uppercase tracking-[0.2em] text-white/50">
-            Indoor 360° · Photogrammetry capture
+            Indoor 360° · Interior capture
           </p>
           <h2 className="mt-0.5 truncate text-base font-semibold text-white">
             {target.name}
@@ -60,7 +62,11 @@ export default function BuildingPanorama({
       </header>
 
       <div className="relative flex-1">
-        <Panorama360 modelUrl={glbUrl} hotspots={[]} />
+        <Panorama360
+          modelUrl={glbUrl}
+          textureUrl={textureUrl}
+          hotspots={[]}
+        />
       </div>
 
       <footer className="border-t border-white/10 bg-[#0F172A]/80 px-4 py-2 text-[10px] uppercase tracking-[0.18em] text-white/40 backdrop-blur">
