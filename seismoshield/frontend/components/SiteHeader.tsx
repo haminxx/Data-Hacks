@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, Menu, X } from "lucide-react";
+import { Activity, Building2, Menu, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 const NAV_ITEMS = [
@@ -12,6 +12,13 @@ const NAV_ITEMS = [
   { href: "/emergency", label: "Emergency" },
 ] as const;
 
+// Enterprise is surfaced as a distinct right-aligned CTA (with its
+// own accent pill styling), so it's kept out of the centred NAV_ITEMS
+// list. `/enterprise` itself is a smart redirect — authed users go
+// straight to the dashboard, everyone else lands on the login page
+// (see app/enterprise/page.tsx + lib/enterprise-session.ts).
+const ENTERPRISE_HREF = "/enterprise";
+
 const HIDDEN_ROUTES = new Set<string>(["/map"]);
 
 function navItemActive(href: string, pathname: string): boolean {
@@ -19,6 +26,10 @@ function navItemActive(href: string, pathname: string): boolean {
     return pathname === "/risk" || pathname.startsWith("/risk/");
   }
   return pathname === href;
+}
+
+function enterpriseActive(pathname: string): boolean {
+  return pathname === ENTERPRISE_HREF || pathname.startsWith(`${ENTERPRISE_HREF}/`);
 }
 
 export function SiteHeader() {
@@ -57,7 +68,12 @@ export function SiteHeader() {
           : "border-b border-white/[0.06] bg-[#0B1220]/80 backdrop-blur-md"
       }`}
     >
-      <div className="mx-auto grid h-16 max-w-7xl grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 sm:px-6 md:px-12">
+      {/* Layout: [logo | flexible nav | right-actions]. `auto_1fr_auto`
+          lets the middle column absorb all the slack so the nav stays
+          truly centred, and pins the hamburger + Enterprise CTA flush
+          to the right edge on every breakpoint — no more mid-header
+          menu icon on narrow windows. */}
+      <div className="mx-auto grid h-16 max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-3 px-4 sm:px-6 md:px-12">
         <Link
           href="/"
           className="group inline-flex min-w-0 items-center gap-2 justify-self-start text-sm font-semibold tracking-tight text-white"
@@ -92,8 +108,22 @@ export function SiteHeader() {
           })}
         </nav>
 
-        {/* Mobile / narrow: menu — desktop keeps centered nav in column 2 */}
-        <div className="relative justify-self-end md:col-start-3" ref={menuRef}>
+        {/* Right-rail. Desktop: Enterprise pill (accent-coloured so it
+            reads as a primary CTA rather than a normal nav link).
+            Mobile: hamburger in the SAME slot, pinned right. */}
+        <div className="relative flex items-center gap-2 justify-self-end" ref={menuRef}>
+          <Link
+            href={ENTERPRISE_HREF}
+            className={`hidden items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition md:inline-flex ${
+              enterpriseActive(pathname)
+                ? "border-[#1A56DB]/70 bg-[#1A56DB]/25 text-white shadow-[0_0_0_1px_rgba(26,86,219,0.35)]"
+                : "border-[#1A56DB]/40 bg-[#1A56DB]/15 text-[#dbe7ff] hover:border-[#1A56DB]/80 hover:bg-[#1A56DB]/30 hover:text-white"
+            }`}
+          >
+            <Building2 className="h-3.5 w-3.5" />
+            Enterprise
+          </Link>
+
           <button
             type="button"
             aria-expanded={menuOpen}
@@ -109,7 +139,7 @@ export function SiteHeader() {
             <div
               id="site-header-mobile-menu"
               role="menu"
-              className="absolute right-0 top-12 z-50 min-w-[220px] rounded-2xl border border-white/10 bg-[#0b1426]/95 py-2 shadow-2xl shadow-black/40 backdrop-blur-xl md:hidden"
+              className="absolute right-0 top-12 z-50 min-w-[240px] overflow-hidden rounded-2xl border border-white/10 bg-[#0b1426]/95 py-2 shadow-2xl shadow-black/40 backdrop-blur-xl md:hidden"
             >
               {NAV_ITEMS.map((item) => {
                 const active = navItemActive(item.href, pathname);
@@ -128,11 +158,24 @@ export function SiteHeader() {
                   </Link>
                 );
               })}
+              {/* Enterprise CTA — visually separated from the main
+                  nav list so it still reads as a distinct, authed
+                  destination on mobile. */}
+              <div className="my-1 border-t border-white/10" aria-hidden />
+              <Link
+                href={ENTERPRISE_HREF}
+                role="menuitem"
+                className={`flex items-center gap-2 px-4 py-2.5 text-[14px] font-medium transition ${
+                  enterpriseActive(pathname)
+                    ? "bg-[#1A56DB]/25 text-white"
+                    : "text-[#dbe7ff] hover:bg-[#1A56DB]/20 hover:text-white"
+                }`}
+              >
+                <Building2 className="h-4 w-4" />
+                Enterprise
+              </Link>
             </div>
           )}
-
-          {/* md+: keep grid balanced (nav centered in col 2; col 3 spacer ≈ hamburger width) */}
-          <span className="hidden w-10 md:block" aria-hidden />
         </div>
       </div>
     </header>

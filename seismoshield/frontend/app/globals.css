@@ -186,3 +186,50 @@
     transform: scale(1);
   }
 }
+
+/*
+ * Hero globe — transform-only parked/flying layout.
+ *
+ * The element is always a perfect square (aspect-ratio is enforced on
+ * the wrapper via Tailwind) so the canvas inside NEVER stretches —
+ * position and zoom are driven purely by `transform`. This is the fix
+ * for the "orb" distortion that used to happen when the old layout
+ * animated `inset / width / height` to non-square values.
+ *
+ * Mobile (default): parked at the bottom-centre of the hero card,
+ * sized generously so the globe reads just under the Demo button.
+ * Desktop (≥768px): larger, shifted to the right of card centre.
+ * Flying: both breakpoints ease to card centre + scale up, with a
+ * delay that matches the globe's own Stage-1 "rotate in place" beat
+ * so the motion reads as rotate → glide → zoom → hand-off.
+ */
+.hero-globe {
+  width: min(108%, 560px);
+  transform-origin: center center;
+  will-change: transform;
+  transform: translate(0%, 26%) scale(1);
+  transition: transform 2200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hero-globe[data-flying="true"] {
+  transform: translate(0%, 0%) scale(1.65);
+  /* Delay matches STAGE_1_MS in app/page.tsx — keeps CSS and JS
+     beats in lock-step without needing a runtime style update. */
+  transition-delay: 1400ms;
+}
+
+@media (min-width: 768px) {
+  .hero-globe {
+    width: clamp(420px, 64%, 780px);
+    transform: translate(40%, 12%) scale(1);
+  }
+  .hero-globe[data-flying="true"] {
+    transform: translate(0%, 0%) scale(1.55);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-globe {
+    transition-duration: 0ms;
+  }
+}

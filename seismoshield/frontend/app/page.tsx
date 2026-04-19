@@ -12,17 +12,19 @@ import { Globe, type GlobeHandle } from "@/components/Globe";
 // overlaps the tail of the zoom so the planet appears to dive into
 // the map screen.
 //
-// Globe movement is split into two beats so the motion reads as
-// "rotate in place → then glide to centre + zoom":
-//   • STAGE_1_MS: rotate on its axis (no translate, no scale)
-//   • STAGE_2_MS: CSS transform eases the globe to card centre
-//     while scaling up. Runs in parallel with the globe's own
-//     Stage-2 rotation/zoom, and completes just before the route.
-const STAGE_1_MS = 1400;
-const STAGE_2_MS = 1600;
-const FADE_DURATION_MS = 1400;
-const FADE_IN_AT_MS = 2000;
-const ROUTE_AT_MS = 3200;
+// The globe's outer "parked → centred + zoomed" motion is driven
+// entirely by the `.hero-globe` CSS class (see globals.css):
+//   • 1400ms delay → rotate in place first
+//   • 2200ms transform transition → glide to card centre + scale up
+// Those numbers are deliberately slower and zoomier than before so
+// the viewer gets an extra beat to register the plunge.
+//
+// ROUTE_AT_MS must stay >= 1400 + 2200 = 3600 so the hero transform
+// finishes before we unmount the page. FADE_IN_AT_MS lines up the
+// crossfade with the tail end of that transform.
+const FADE_DURATION_MS = 1300;
+const FADE_IN_AT_MS = 2500;
+const ROUTE_AT_MS = 3800;
 
 export default function HomePage() {
   const router = useRouter();
@@ -105,48 +107,36 @@ export default function HomePage() {
             </div>
 
             {/* Reserves right-column space on desktop so the copy + globe
-                don't collide. On mobile, space is reserved below by the
-                card's padding + min-height so the globe sits under the
-                tagline, clipped by the card corner. */}
-            <div className="relative h-[min(38vh,240px)] w-full shrink-0 md:h-[320px] md:max-w-xl md:flex-1" />
+                don't collide. On mobile, space is reserved below the
+                Demo button so the larger bottom-centred globe has a
+                clean runway before the card edge clips it. */}
+            <div className="relative h-[min(46vh,320px)] w-full shrink-0 md:h-[340px] md:max-w-xl md:flex-1" />
           </div>
 
           {/* Globe stage. Full-card flex container keeps the square
-              wrapper centered; the wrapper itself stays perfectly
+              wrapper centred; the wrapper itself stays perfectly
               square (aspect-[1/1]) at ALL times so the globe never
               stretches into an "orb". Position + zoom are animated
-              purely via `transform` (translate + scale), which
-              interpolates without touching layout. During the demo
-              cinematic the translate eases back to (0,0) and scale
-              grows, so the globe glides from the bottom-right into
-              the card centre while rotating — no shape distortion.
+              purely via `transform` (translate + scale) on the
+              `.hero-globe` class — see globals.css for the
+              responsive parked / flying positions and the cubic
+              easing. During the demo cinematic the translate eases
+              back to (0,0) and scale grows, so the globe glides
+              from its parked position into the exact card centre
+              (both axes) while rotating — no shape distortion.
+
+              Layout anchor: on mobile the wrapper sits centred so
+              the globe ends up bottom-centred via its parked
+              transform. On ≥md the same centre anchor + a positive
+              X-translate parks the globe slightly right-of-centre.
 
               `pointer-events-none` on the outer layer keeps the Demo
               button clickable; the inner square re-enables events
               so the globe remains draggable when idle. */}
           <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
             <div
-              className="pointer-events-auto aspect-[1/1]"
-              style={{
-                // Square size scales with the card. Deliberately
-                // larger than before so the planet reads as the hero
-                // element even when parked off-corner.
-                width: "clamp(360px, 64%, 740px)",
-                transformOrigin: "center center",
-                willChange: "transform",
-                // Rotate-in-place first (Stage 1 rotation runs with
-                // zero translate/scale change), THEN translate +
-                // scale to centre during Stage 2. Delay == Stage 1
-                // duration so the two beats hand off cleanly.
-                transition: `transform ${STAGE_2_MS}ms cubic-bezier(0.16, 1, 0.3, 1) ${flying ? STAGE_1_MS : 0}ms`,
-                // Parked: shifted down-right so ~a third pokes past
-                // the card corner. The card's `overflow-hidden` does
-                // the clipping; the globe itself remains a pristine
-                // circle inside its square viewport.
-                transform: flying
-                  ? "translate(0%, 0%) scale(1.4)"
-                  : "translate(38%, 36%) scale(1)",
-              }}
+              className="hero-globe pointer-events-auto aspect-[1/1]"
+              data-flying={flying ? "true" : "false"}
             >
               <Globe ref={globeRef} className="h-full w-full" />
             </div>
