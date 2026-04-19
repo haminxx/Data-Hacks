@@ -175,6 +175,165 @@
   filter: blur(1.5px) contrast(1.18);
 }
 
+@keyframes simFloatUp {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  30% {
+    opacity: 1;
+    transform: translate(-50%, -8px);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+}
+
+@keyframes simFloatDown {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+  }
+  30% {
+    opacity: 1;
+    transform: translate(-50%, 8px);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+}
+
+@keyframes simSurvivalPulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 3px rgba(220, 38, 38, 0.65));
+  }
+  50% {
+    filter: drop-shadow(0 0 14px rgba(220, 38, 38, 0.95));
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes simSwing {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) rotate(-1deg);
+  }
+  50% {
+    transform: translate(-50%, -50%) rotate(1deg);
+  }
+}
+
+@keyframes simSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes simGlowPulse {
+  0%,
+  100% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+.sim-survival-pulse {
+  animation: simSurvivalPulse 1.5s ease-in-out infinite;
+}
+
+/* Simulator — landing start button */
+@keyframes simStartPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+.sim-start-button {
+  animation: simStartPulse 2s ease-in-out infinite;
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+
+.sim-start-button:hover {
+  filter: brightness(1.08);
+}
+
+@keyframes confettiFall {
+  0% {
+    transform: translateY(-20px) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) rotate(720deg);
+    opacity: 0.8;
+  }
+}
+
+@keyframes ringPulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
+}
+
+@keyframes simSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sim-continue-btn {
+  animation: simSlideUp 0.4s ease-out;
+}
+
+.sim-continue-btn:hover {
+  background: #1d4ed8 !important;
+}
+
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* 360° panorama — hotspot dot → glassmorphism card pop-in */
 @keyframes panorama-pop {
   0% {

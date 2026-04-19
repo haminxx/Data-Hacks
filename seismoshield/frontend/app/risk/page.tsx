@@ -1,9 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   Building2,
   ChevronRight,
   Info,
@@ -54,14 +52,6 @@ export default function RiskAddressPage() {
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-[min(55vh,420px)] bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(26,86,219,0.18),transparent_65%)]"
       />
-
-      <Link
-        href="/exterior"
-        className="absolute left-4 top-20 z-10 inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-sm text-white/75 backdrop-blur-sm transition hover:border-white/15 hover:bg-white/[0.07] hover:text-white md:left-8 md:top-24"
-      >
-        <ArrowLeft className="h-4 w-4 shrink-0 opacity-80" />
-        Back
-      </Link>
 
       <div className="relative flex flex-1 flex-col items-center justify-center px-4 pb-20 pt-8 md:pt-12">
         <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#1A56DB]/25 bg-[#1A56DB]/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.12em] text-[#93c5fd]">
