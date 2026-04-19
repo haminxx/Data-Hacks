@@ -2,18 +2,17 @@
 
 import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
-import type { CSSProperties } from "react";
 import { useEffect, useRef, useState } from "react";
 
 import { Globe, type GlobeHandle } from "@/components/Globe";
 
-// Single source of truth for the globe's square edge length. Using `min(…)`
-// keeps the globe large on wide desktops while still clamping inside the
-// viewport on phones. The button's vertical offset is computed off of this
-// same value so it sits a fixed gap above the globe's top edge at every
-// breakpoint.
-const GLOBE_SIZE = "min(92vh, 95vw)";
-const BUTTON_GAP_PX = 56;
+// Timings for the click → /map cinematic. The flyTo inside <Globe/> runs
+// 900ms + 800ms, so by ~1700ms the camera is locked on the San Diego
+// beacon. We start the cross-fade a hair before that and hard-navigate at
+// 1700ms so the whole handoff lands in under 2 seconds.
+const EXPAND_MS = 1300;
+const FADE_IN_AT_MS = 1100;
+const ROUTE_AT_MS = 1700;
 
 export default function HomePage() {
   const router = useRouter();
@@ -21,112 +20,138 @@ export default function HomePage() {
   const [flying, setFlying] = useState<boolean>(false);
   const [fadeOut, setFadeOut] = useState<boolean>(false);
 
+  // Prefetch /map on mount so the 2.5D campus is in the RSC cache by the
+  // time the cinematic finishes — the transition is effectively instant.
   useEffect(() => {
     router.prefetch("/map");
   }, [router]);
 
-  const handleLaunchDemo = async () => {
+  const handleLaunchDemo = () => {
     if (flying) return;
     setFlying(true);
-    try {
-      // Cobe globe cinematic — rotates to California, tightens onto San
-      // Diego, then resolves. We immediately start the route cross-fade so
-      // the navigation feels like one continuous camera move.
-      await globeRef.current?.flyToSanDiego();
-    } finally {
-      setFadeOut(true);
-      window.setTimeout(() => {
-        router.push("/map");
-      }, 750);
-    }
+    // Kick off the globe's two-stage rotate-to-San-Diego in parallel with
+    // the container's CSS expand. We don't await it — the timers below
+    // orchestrate the hand-off to /map deterministically.
+    void globeRef.current?.flyToSanDiego();
+
+    window.setTimeout(() => setFadeOut(true), FADE_IN_AT_MS);
+    window.setTimeout(() => router.push("/map"), ROUTE_AT_MS);
   };
 
-  // Exposed as a CSS variable so both the globe wrapper and the button
-  // container read the exact same size — keeps their positions in lock-step
-  // across resizes.
-  const pageStyle = { "--globe-size": GLOBE_SIZE } as CSSProperties;
-
   return (
-    <div
-      className="relative min-h-[155vh] overflow-x-hidden bg-[#050814] text-white"
-      style={pageStyle}
-    >
-      {/* Ambient cyan/blue glow behind the globe's equator so the dome reads
-          as "lit from within" against the near-black background. */}
+    <div className="relative min-h-screen overflow-hidden bg-[#050814] text-white">
+      {/* Ambient top glow so the dark page doesn't feel flat. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-[100vh] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(26,86,219,0.38)_0%,rgba(5,8,20,0)_70%)]"
-        style={{ width: "var(--globe-size)", height: "var(--globe-size)" }}
+        className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(ellipse_at_top,rgba(26,86,219,0.22)_0%,rgba(5,8,20,0)_70%)]"
       />
 
-      {/* Launch Demo — centered horizontally, anchored a fixed pixel gap
-          above the globe's top edge regardless of viewport size. */}
+      {/* ── Hero card: Ruixen-style, tagline + small Demo on the left. The
+           globe lives in the fixed container below and visually overflows
+           into the card's bottom-right corner. */}
+      <section className="relative mx-auto flex min-h-screen max-w-7xl items-center px-6 pt-28 pb-16 md:px-12 md:pt-32">
+        <div
+          className={`relative w-full overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#0b1224] via-[#080e1e] to-[#050814] px-8 py-14 shadow-[0_40px_120px_-40px_rgba(26,86,219,0.5)] transition-opacity duration-500 md:px-16 md:py-20 ${
+            flying ? "opacity-90" : "opacity-100"
+          }`}
+        >
+          {/* Subtle fine grid backdrop */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 opacity-[0.05]"
+            style={{
+              backgroundImage:
+                "linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)",
+              backgroundSize: "44px 44px",
+            }}
+          />
+
+          <div className="relative flex flex-col-reverse items-start justify-between gap-12 md:flex-row md:items-center">
+            {/* LEFT — tagline + small Demo button */}
+            <div
+              className={`relative z-10 max-w-xl transition-all duration-500 ${
+                flying ? "-translate-x-3 opacity-60" : ""
+              }`}
+            >
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/70 backdrop-blur">
+                <span className="relative inline-flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#1A56DB]/70" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-[#1A56DB]" />
+                </span>
+                Real-time seismic intelligence
+              </div>
+
+              <h1 className="text-[28px] font-normal leading-[1.35] tracking-tight md:text-[32px]">
+                <span className="text-white">Quarte</span>{" "}
+                <span className="text-white/60">
+                  bridges disaster preparedness and insurance tech by using
+                  3D spatial mapping to guide residents to safety during an
+                  earthquake and helping insurers dynamically price
+                  property risk.
+                </span>
+              </h1>
+
+              <button
+                type="button"
+                onClick={handleLaunchDemo}
+                disabled={flying}
+                aria-label="Launch SeismoShield demo"
+                className="group mt-8 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-semibold text-[#050814] shadow-lg shadow-black/25 transition hover:bg-white/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-75"
+              >
+                {flying ? "Flying to San Diego…" : "Demo"}
+                <ArrowRight
+                  className={`h-4 w-4 transition-transform ${
+                    flying ? "translate-x-1" : "group-hover:translate-x-0.5"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* RIGHT — layout spacer. The actual globe lives in the fixed
+                container below so it can smoothly morph from the card
+                corner out to full-screen on launch. */}
+            <div className="relative h-[220px] w-full max-w-xl md:h-[260px]" />
+          </div>
+        </div>
+      </section>
+
+      {/* ── Globe container. Always `fixed` so the morph between its
+           resting "bottom-right overflow" pose and the full-screen pose
+           animates cleanly via transform + width/height only. */}
       <div
-        className="absolute left-1/2 z-20 -translate-x-1/2"
+        className="pointer-events-none fixed z-30 ease-[cubic-bezier(0.16,1,0.3,1)]"
         style={{
-          top: `calc(100vh - (var(--globe-size) / 2) - ${BUTTON_GAP_PX}px)`,
+          transition: `left ${EXPAND_MS}ms, top ${EXPAND_MS}ms, right ${EXPAND_MS}ms, bottom ${EXPAND_MS}ms, width ${EXPAND_MS}ms, height ${EXPAND_MS}ms, transform ${EXPAND_MS}ms`,
+          ...(flying
+            ? {
+                left: "50%",
+                top: "50%",
+                width: "130vmax",
+                height: "130vmax",
+                transform: "translate(-50%, -50%) scale(1)",
+              }
+            : {
+                // Parked at the bottom-right of the viewport (which
+                // visually sits inside the hero card's bottom-right
+                // overflow zone) at a comfortable desktop size.
+                right: "-14rem",
+                bottom: "-10rem",
+                width: "620px",
+                height: "620px",
+                transform: "scale(1.1)",
+              }),
         }}
       >
-        <button
-          type="button"
-          onClick={handleLaunchDemo}
-          disabled={flying}
-          aria-label="Launch SeismoShield demo"
-          className="group inline-flex min-h-[60px] items-center justify-center gap-2 rounded-full bg-[#1A56DB] px-10 py-4 text-base font-semibold text-white shadow-2xl shadow-[#1A56DB]/40 ring-1 ring-white/10 transition hover:bg-[#1647b3] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1A56DB] disabled:cursor-not-allowed disabled:opacity-80"
-        >
-          {flying ? "Flying over California…" : "Launch Demo"}
-          <ArrowRight
-            className={`h-5 w-5 transition-transform ${
-              flying ? "translate-x-1" : "group-hover:translate-x-0.5"
-            }`}
-          />
-        </button>
-      </div>
-
-      {/* Globe — absolutely centered so its vertical midline sits exactly
-          at 100vh from the top of the document. That means the initial
-          viewport renders the entire upper hemisphere, and scrolling
-          downward reveals the lower hemisphere + any room below. */}
-      <div
-        className="absolute left-1/2 top-[100vh] z-10 -translate-x-1/2 -translate-y-1/2"
-        style={{ width: "var(--globe-size)" }}
-      >
-        <div className="relative aspect-square w-full">
+        <div className="pointer-events-auto h-full w-full">
           <Globe ref={globeRef} className="h-full w-full" />
         </div>
       </div>
 
-      {/* Subtle scroll cue just above the initial fold so users understand
-          there's more globe below. Pure icon + chevron, no copy. */}
+      {/* Cross-fade overlay — starts ~FADE_IN_AT_MS after click so the
+          camera has time to land on San Diego before the dissolve. */}
       <div
         aria-hidden
-        className={`pointer-events-none absolute bottom-[2vh] left-1/2 z-20 -translate-x-1/2 transition-opacity duration-500 ${
-          flying ? "opacity-0" : "opacity-60"
-        }`}
-      >
-        <div className="flex flex-col items-center gap-1 text-white/55">
-          <div className="h-6 w-[2px] animate-pulse rounded-full bg-white/40" />
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden
-          >
-            <path d="M6 9l6 6 6-6" />
-          </svg>
-        </div>
-      </div>
-
-      {/* Cross-fade overlay — fades to navy while we route to /map so the
-          handoff from globe → 2.5D campus feels like a single camera move. */}
-      <div
-        aria-hidden
-        className={`pointer-events-none fixed inset-0 z-40 bg-[#0F172A] transition-opacity duration-700 ${
+        className={`pointer-events-none fixed inset-0 z-40 bg-[#0F172A] transition-opacity duration-500 ${
           fadeOut ? "opacity-100" : "opacity-0"
         }`}
       />

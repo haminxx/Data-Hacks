@@ -1,16 +1,21 @@
 "use client";
 
-import { Canvas, type ThreeEvent } from "@react-three/fiber";
-import { Html, OrbitControls, useTexture } from "@react-three/drei";
-import { Suspense, useState } from "react";
+import { Canvas, type ThreeEvent, useThree } from "@react-three/fiber";
+import {
+  Html,
+  OrbitControls,
+  useGLTF,
+  useProgress,
+  useTexture,
+} from "@react-three/drei";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { X } from "lucide-react";
 
 /**
- * Describes a single clickable point-of-interest inside the panorama. The
- * `position` is in world coordinates and should sit on (or just inside of)
- * the sphere's surface — use the Coordinate Logger in <Environment360/> to
- * harvest exact values by clicking the 360° image.
+ * Clickable point-of-interest inside the panorama. `position` is in world
+ * coordinates; use the Coordinate Logger (onPointerDown on the environment
+ * scene) to harvest exact values by clicking the 3D surface.
  */
 export type HotspotData = {
   id: string;
@@ -22,31 +27,74 @@ export type HotspotData = {
 const DEFAULT_HOTSPOTS: HotspotData[] = [
   {
     id: "sample",
-    // Sits on the sphere's "front" (along +Z). Drop your own by clicking
-    // the image — the console will log the exact [x, y, z] you need.
-    position: [0, 0, 45],
+    position: [0, 0, 2.5],
     title: "Sample Hotspot",
     description:
-      "Click any point on the 360° image to print its [x, y, z] to the console, then paste that into the `hotspots` prop to pin a card here.",
+      "Click any point on the scene to print its [x, y, z] to the console, then paste that into the `hotspots` prop to pin a card here.",
   },
 ];
 
 // ---------------------------------------------------------------------------
-// Environment sphere
+// GLB environment (primary)
 // ---------------------------------------------------------------------------
 
-interface Environment360Props {
+interface SceneModelProps {
+  url: string;
+  onPointerDown?: (event: ThreeEvent<PointerEvent>) => void;
+}
+
+function SceneModel({ url, onPointerDown }: SceneModelProps) {
+  const { scene } = useGLTF(url);
+  const { camera } = useThree();
+
+  // Clone once so multiple instances don't share mutated material/mesh flags.
+  const cloned = useMemo(() => scene.clone(true), [scene]);
+
+  // Re-center the scene so its bounding-box midpoint sits at the world
+  // origin, then drop the camera inside it. For a photogrammetry capture
+  // exported as a GLB, this puts the viewer "inside" the scan regardless
+  // of the file's authoring origin. We also harden materials so interior
+  // walls render from both sides.
+  useEffect(() => {
+    const box = new THREE.Box3().setFromObject(cloned);
+    const center = box.getCenter(new THREE.Vector3());
+    cloned.position.sub(center);
+
+    cloned.traverse((obj) => {
+      const mesh = obj as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      mesh.frustumCulled = false;
+      const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      mats.forEach((m) => {
+        if (!m) return;
+        const mm = m as THREE.MeshStandardMaterial;
+        mm.side = THREE.DoubleSide;
+        if (mm.map) mm.map.colorSpace = THREE.SRGBColorSpace;
+        mm.needsUpdate = true;
+      });
+    });
+
+    // Anchor the camera slightly above world origin so orbiting feels
+    // natural inside a room-scale capture.
+    camera.position.set(0, 0.05, 0.01);
+    camera.lookAt(0, 0, 0);
+  }, [cloned, camera]);
+
+  return <primitive object={cloned} onPointerDown={onPointerDown} />;
+}
+
+// ---------------------------------------------------------------------------
+// Sphere + JPG fallback (kept for drop-in equirectangular photos)
+// ---------------------------------------------------------------------------
+
+interface SphereEnvironmentProps {
   textureUrl: string;
   onPointerDown?: (event: ThreeEvent<PointerEvent>) => void;
 }
 
-function Environment360({ textureUrl, onPointerDown }: Environment360Props) {
-  // `useTexture` suspends until the image resolves. Three's default color
-  // space for imported textures is linear — we nudge it to sRGB so the
-  // panorama reads with the same gamma as the source JPG.
+function SphereEnvironment({ textureUrl, onPointerDown }: SphereEnvironmentProps) {
   const texture = useTexture(textureUrl);
   texture.colorSpace = THREE.SRGBColorSpace;
-
   return (
     <mesh onPointerDown={onPointerDown}>
       <sphereGeometry args={[50, 64, 64]} />
@@ -59,22 +107,15 @@ function Environment360({ textureUrl, onPointerDown }: Environment360Props) {
 // Hotspot (pulsating dot → glassmorphism popover)
 // ---------------------------------------------------------------------------
 
-interface HotspotProps {
-  data: HotspotData;
-}
-
-function Hotspot({ data }: HotspotProps) {
+function Hotspot({ data }: { data: HotspotData }) {
   const [open, setOpen] = useState(false);
 
   return (
     <Html
       position={data.position}
       center
-      distanceFactor={16}
+      distanceFactor={2.5}
       zIndexRange={[40, 100]}
-      // `occlude` hides the hotspot when it rotates behind the camera; we
-      // disable it here because OrbitControls keeps the camera at origin
-      // and the sphere is BackSide, so occlusion would read inverted.
       occlude={false}
     >
       <div className="relative flex items-center justify-center">
@@ -118,29 +159,56 @@ function Hotspot({ data }: HotspotProps) {
 }
 
 // ---------------------------------------------------------------------------
+// Progress HUD (shown while the GLB streams in)
+// ---------------------------------------------------------------------------
+
+function LoadingBadge() {
+  const { active, progress } = useProgress();
+  if (!active && progress >= 100) return null;
+  return (
+    <div className="pointer-events-none absolute bottom-6 left-1/2 z-10 -translate-x-1/2 rounded-full border border-white/15 bg-black/55 px-4 py-1.5 text-[11px] uppercase tracking-[0.22em] text-white/85 backdrop-blur">
+      Loading 360° environment · {Math.round(progress)}%
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Top-level viewer
 // ---------------------------------------------------------------------------
 
 export interface Panorama360Props {
+  /** GLB URL. When set, renders the 3D scene captured in the file. */
+  modelUrl?: string;
+  /** Equirectangular JPG fallback. Used when `modelUrl` is not provided. */
   textureUrl?: string;
   hotspots?: HotspotData[];
 }
 
 export default function Panorama360({
+  modelUrl = "/models/room-360.glb",
   textureUrl = "/room-360.jpg",
   hotspots = DEFAULT_HOTSPOTS,
 }: Panorama360Props) {
-  // Coordinate logger — every click on the sphere prints the exact
-  // intersection point, rounded to 2 decimals, ready to drop into a
-  // <Hotspot/> position.
+  const loggedRef = useRef(false);
+
+  // Coordinate logger — every click on the environment prints the exact
+  // intersection point, rounded to 3 decimals and pre-formatted so it
+  // drops straight into a <Hotspot/> position.
   const handleLog = (event: ThreeEvent<PointerEvent>) => {
     event.stopPropagation();
     const { x, y, z } = event.point;
     const rounded: [number, number, number] = [
-      Math.round(x * 100) / 100,
-      Math.round(y * 100) / 100,
-      Math.round(z * 100) / 100,
+      Math.round(x * 1000) / 1000,
+      Math.round(y * 1000) / 1000,
+      Math.round(z * 1000) / 1000,
     ];
+    if (!loggedRef.current) {
+      loggedRef.current = true;
+      // eslint-disable-next-line no-console
+      console.info(
+        "[Panorama360] Click anywhere on the 3D scene to log a hotspot position.",
+      );
+    }
     // eslint-disable-next-line no-console
     console.log(
       "[Panorama360] hotspot position →",
@@ -150,32 +218,51 @@ export default function Panorama360({
   };
 
   return (
-    <Canvas
-      // Camera at (near-)origin with a slight +Z nudge so OrbitControls has
-      // a stable rotation pivot against the target at [0, 0, 0].
-      camera={{ position: [0, 0, 0.01], fov: 75, near: 0.1, far: 1000 }}
-      gl={{ antialias: true, powerPreference: "high-performance" }}
-      className="h-full w-full"
-    >
-      <Suspense fallback={null}>
-        <Environment360 textureUrl={textureUrl} onPointerDown={handleLog} />
-        {hotspots.map((h) => (
-          <Hotspot key={h.id} data={h} />
-        ))}
-      </Suspense>
+    <div className="relative h-full w-full">
+      <Canvas
+        camera={{ position: [0, 0.05, 0.01], fov: 75, near: 0.01, far: 1000 }}
+        gl={{ antialias: true, powerPreference: "high-performance" }}
+        className="h-full w-full"
+      >
+        {/* Soft scene lighting so the GLB's materials read with some volume
+            even when the capture lacks baked lighting. */}
+        <ambientLight intensity={0.85} />
+        <hemisphereLight
+          color="#d8e3ff"
+          groundColor="#2a2f3a"
+          intensity={0.55}
+        />
 
-      <OrbitControls
-        enableZoom={false}
-        enablePan={false}
-        // Inverted rotate speed makes dragging feel like you're turning your
-        // head inside the sphere rather than spinning it around you.
-        rotateSpeed={-0.35}
-        // Lock rolls — look left/right and up/down only.
-        enableDamping
-        dampingFactor={0.08}
-        minPolarAngle={0.1}
-        maxPolarAngle={Math.PI - 0.1}
-      />
-    </Canvas>
+        <Suspense fallback={null}>
+          {modelUrl ? (
+            <SceneModel url={modelUrl} onPointerDown={handleLog} />
+          ) : (
+            <SphereEnvironment
+              textureUrl={textureUrl}
+              onPointerDown={handleLog}
+            />
+          )}
+          {hotspots.map((h) => (
+            <Hotspot key={h.id} data={h} />
+          ))}
+        </Suspense>
+
+        <OrbitControls
+          enableZoom={false}
+          enablePan={false}
+          rotateSpeed={-0.35}
+          enableDamping
+          dampingFactor={0.08}
+          minPolarAngle={0.15}
+          maxPolarAngle={Math.PI - 0.15}
+        />
+      </Canvas>
+
+      <LoadingBadge />
+    </div>
   );
 }
+
+// Pre-warm the GLTF loader so the cached version is available when the
+// component mounts.
+useGLTF.preload("/models/room-360.glb");

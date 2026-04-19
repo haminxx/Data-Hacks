@@ -63,10 +63,10 @@ export function SiteHeader() {
         </nav>
 
         <Link
-          href="/map"
+          href="/enterprise/login"
           className="inline-flex items-center gap-1.5 rounded-full bg-[#1A56DB] px-4 py-1.5 text-[13px] font-semibold text-white shadow-sm shadow-[#1A56DB]/25 transition hover:bg-[#1647b3]"
         >
-          Open map
+          Enterprise
         </Link>
       </div>
     </header>

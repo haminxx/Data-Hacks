@@ -233,8 +233,10 @@ export const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
           const sdThetaOffset = SAN_DIEGO_LAT_RAD - BASE_THETA;
 
           const el = containerRef.current;
-          const stage1Duration = 1700;
-          const stage2Duration = 1600;
+          // Tightened timings for the landing → map cinematic: keep the
+          // two-stage feel but get the user to the 2.5D map in under 2s.
+          const stage1Duration = 900;
+          const stage2Duration = 800;
 
           if (el) {
             el.style.transition = `transform ${stage1Duration}ms cubic-bezier(0.4, 0, 0.2, 1), filter ${stage1Duration}ms cubic-bezier(0.4, 0, 0.2, 1)`;
