@@ -40,6 +40,10 @@ const MARKERS: PulseMarker[] = [
 
 const SAN_DIEGO_LAT_RAD = (32.7157 * Math.PI) / 180;
 const SAN_DIEGO_LON_RAD = (-117.1611 * Math.PI) / 180;
+// Intermediate waypoint — centered over California so the camera "arrives" at
+// the west coast before tightening onto San Diego specifically.
+const CALIFORNIA_LAT_RAD = (36.7783 * Math.PI) / 180;
+const CALIFORNIA_LON_RAD = (-119.4179 * Math.PI) / 180;
 const BASE_THETA = 0.28;
 
 interface GlobeProps {
@@ -50,6 +54,10 @@ interface GlobeProps {
 
 function easeInOutCubic(t: number): number {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+function easeOutQuart(t: number): number {
+  return 1 - Math.pow(1 - t, 4);
 }
 
 function shortestDelta(from: number, to: number): number {
@@ -196,34 +204,70 @@ export const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
           thetaOffsetRef.current += dragOffsetRef.current.theta;
           dragOffsetRef.current = { phi: 0, theta: 0 };
 
-          const currentTotal = phiRef.current + phiOffsetRef.current;
-          const delta = shortestDelta(
-            currentTotal % (Math.PI * 2),
+          // Two-stage cinematic flight:
+          // Stage 1 (0 .. 55%): rotate so California sits front-center,
+          //   gentle scale(1.35) so the continent reads first.
+          // Stage 2 (55 .. 100%): tighten onto San Diego exactly and
+          //   accelerate the zoom into the beacon.
+          const startPhiOffset = phiOffsetRef.current;
+          const startThetaOffset = thetaOffsetRef.current;
+
+          const currentTotalPhi = phiRef.current + phiOffsetRef.current;
+          const toCaliforniaDelta = shortestDelta(
+            currentTotalPhi % (Math.PI * 2),
+            -CALIFORNIA_LON_RAD,
+          );
+          const caliPhiOffset = startPhiOffset + toCaliforniaDelta;
+          const caliThetaOffset = CALIFORNIA_LAT_RAD - BASE_THETA;
+
+          const caliTotalPhi = phiRef.current + caliPhiOffset;
+          const toSanDiegoDelta = shortestDelta(
+            caliTotalPhi % (Math.PI * 2),
             -SAN_DIEGO_LON_RAD,
           );
-          const startPhiOffset = phiOffsetRef.current;
-          const endPhiOffset = startPhiOffset + delta;
-
-          const startThetaOffset = thetaOffsetRef.current;
-          const endThetaOffset = SAN_DIEGO_LAT_RAD - BASE_THETA;
+          const sdPhiOffset = caliPhiOffset + toSanDiegoDelta;
+          const sdThetaOffset = SAN_DIEGO_LAT_RAD - BASE_THETA;
 
           const el = containerRef.current;
+          const stage1Duration = 1700;
+          const stage2Duration = 1600;
+
           if (el) {
-            el.style.transition =
-              "transform 2200ms cubic-bezier(0.65, 0, 0.35, 1), filter 2200ms cubic-bezier(0.65, 0, 0.35, 1)";
-            el.style.transform = "scale(2.4)";
-            el.style.filter = "brightness(1.15) saturate(1.1)";
+            el.style.transition = `transform ${stage1Duration}ms cubic-bezier(0.4, 0, 0.2, 1), filter ${stage1Duration}ms cubic-bezier(0.4, 0, 0.2, 1)`;
+            el.style.transform = "scale(1.35)";
+            el.style.filter = "brightness(1.08) saturate(1.08)";
           }
 
           const start = performance.now();
-          const duration = 2200;
+          const totalDuration = stage1Duration + stage2Duration;
+          let stage2Triggered = false;
+
           const step = (now: number) => {
-            const t = Math.min(1, (now - start) / duration);
-            const e = easeInOutCubic(t);
-            phiOffsetRef.current =
-              startPhiOffset + (endPhiOffset - startPhiOffset) * e;
-            thetaOffsetRef.current =
-              startThetaOffset + (endThetaOffset - startThetaOffset) * e;
+            const elapsed = now - start;
+            const t = Math.min(1, elapsed / totalDuration);
+
+            if (elapsed < stage1Duration) {
+              const s1 = elapsed / stage1Duration;
+              const e1 = easeInOutCubic(s1);
+              phiOffsetRef.current =
+                startPhiOffset + (caliPhiOffset - startPhiOffset) * e1;
+              thetaOffsetRef.current =
+                startThetaOffset + (caliThetaOffset - startThetaOffset) * e1;
+            } else {
+              if (!stage2Triggered && el) {
+                stage2Triggered = true;
+                el.style.transition = `transform ${stage2Duration}ms cubic-bezier(0.33, 0.02, 0.38, 1), filter ${stage2Duration}ms cubic-bezier(0.33, 0.02, 0.38, 1)`;
+                el.style.transform = "scale(3.1)";
+                el.style.filter = "brightness(1.18) saturate(1.18)";
+              }
+              const s2 = Math.min(1, (elapsed - stage1Duration) / stage2Duration);
+              const e2 = easeOutQuart(s2);
+              phiOffsetRef.current =
+                caliPhiOffset + (sdPhiOffset - caliPhiOffset) * e2;
+              thetaOffsetRef.current =
+                caliThetaOffset + (sdThetaOffset - caliThetaOffset) * e2;
+            }
+
             if (t < 1) {
               requestAnimationFrame(step);
             } else {

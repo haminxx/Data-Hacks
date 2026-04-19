@@ -12,19 +12,20 @@ const NAV_ITEMS = [
   { href: "/emergency", label: "Emergency" },
 ] as const;
 
-interface SiteHeaderProps {
-  transparent?: boolean;
-}
+const HIDDEN_ROUTES = new Set<string>(["/map"]);
 
-export function SiteHeader({ transparent = false }: SiteHeaderProps) {
-  const pathname = usePathname();
+export function SiteHeader() {
+  const pathname = usePathname() ?? "/";
+  if (HIDDEN_ROUTES.has(pathname)) return null;
+
+  const transparent = pathname === "/";
 
   return (
     <header
-      className={`absolute inset-x-0 top-0 z-30 ${
+      className={`fixed inset-x-0 top-0 z-30 ${
         transparent
           ? "bg-transparent"
-          : "border-b border-white/[0.06] bg-[#0B1220]/70 backdrop-blur-md"
+          : "border-b border-white/[0.06] bg-[#0B1220]/80 backdrop-blur-md"
       }`}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 md:px-12">
@@ -64,7 +65,7 @@ export function SiteHeader({ transparent = false }: SiteHeaderProps) {
 
         <Link
           href="/map"
-          className="inline-flex items-center gap-1.5 rounded-full bg-[#1A56DB] px-4 py-1.5 text-[13px] font-semibold text-white shadow-sm shadow-[#1A56DB]/25 transition hover:bg-[#1647b3] md:inline-flex"
+          className="inline-flex items-center gap-1.5 rounded-full bg-[#1A56DB] px-4 py-1.5 text-[13px] font-semibold text-white shadow-sm shadow-[#1A56DB]/25 transition hover:bg-[#1647b3]"
         >
           Open map
         </Link>

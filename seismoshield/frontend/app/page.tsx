@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { Globe, type GlobeHandle } from "@/components/Globe";
-import { SiteHeader } from "@/components/SiteHeader";
 
 const DEFAULT_ADDRESS = "9500 Gilman Dr, La Jolla, CA 92093";
 
@@ -53,7 +52,7 @@ export default function HomePage() {
       setFadeOut(true);
       window.setTimeout(() => {
         router.push("/map");
-      }, 650);
+      }, 750);
     }
   };
 
@@ -67,8 +66,6 @@ export default function HomePage() {
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-[320px] bg-[radial-gradient(ellipse_at_top,rgba(26,86,219,0.25)_0%,rgba(15,23,42,0)_70%)]"
       />
-
-      <SiteHeader transparent />
 
       <section
         className={`relative mx-auto flex min-h-screen max-w-7xl flex-col-reverse items-center justify-between gap-12 px-6 pb-16 pt-28 transition-opacity duration-500 md:flex-row md:px-12 md:pb-24 md:pt-32 ${
@@ -124,7 +121,7 @@ export default function HomePage() {
               disabled={flying}
               className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-full bg-[#1A56DB] px-7 py-3 text-base font-semibold text-white shadow-lg shadow-[#1A56DB]/25 transition hover:bg-[#1647b3] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1A56DB] disabled:cursor-not-allowed disabled:opacity-70 sm:flex-none"
             >
-              {flying ? "Flying to San Diego…" : "Launch Demo"}
+              {flying ? "Flying over California…" : "Launch Demo"}
               <ArrowRight
                 className={`h-4 w-4 transition-transform ${flying ? "translate-x-1" : ""}`}
               />
@@ -156,10 +153,10 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="relative flex w-full max-w-xl items-center justify-center">
+        <div className="relative flex w-full max-w-2xl items-center justify-center">
           <Globe
             ref={globeRef}
-            className="w-full max-w-[520px]"
+            className="w-full max-w-[680px] md:max-w-[720px]"
           />
         </div>
       </section>
