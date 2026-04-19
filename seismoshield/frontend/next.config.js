@@ -1,5 +1,11 @@
-// Next.js 14 config: App Router, PWA headers, images domains if needed.
+const withPWA = require("next-pwa")({
+  dest: "public",
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === "development",
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {};
 
-module.exports = nextConfig;
+module.exports = withPWA(nextConfig);
