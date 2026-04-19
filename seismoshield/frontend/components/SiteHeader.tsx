@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Activity, Building2, Menu, X } from "lucide-react";
+import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
 const NAV_ITEMS = [
@@ -37,6 +38,45 @@ function enterpriseActive(pathname: string): boolean {
     pathname.startsWith(`${ENTERPRISE_ROOT}/`)
   );
 }
+
+// Stagger variants for the mobile dropdown. The panel fades in as a
+// whole, then each nav row cascades top → bottom so the reveal reads
+// like a "curtain drop" rather than everything appearing at once.
+const mobilePanel: Variants = {
+  hidden: { opacity: 0, y: -8, scale: 0.98 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      duration: 0.22,
+      ease: [0.22, 1, 0.36, 1],
+      staggerChildren: 0.06,
+      delayChildren: 0.05,
+    },
+  },
+  exit: {
+    opacity: 0,
+    y: -6,
+    scale: 0.98,
+    transition: { duration: 0.14, ease: "easeIn" },
+  },
+};
+
+const mobileItem: Variants = {
+  hidden: { opacity: 0, y: -10, filter: "blur(6px)" },
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: { duration: 0.32, ease: [0.22, 1, 0.36, 1] },
+  },
+  exit: {
+    opacity: 0,
+    y: -4,
+    transition: { duration: 0.12, ease: "easeIn" },
+  },
+};
 
 export function SiteHeader() {
   const pathname = usePathname() ?? "/";
@@ -141,47 +181,63 @@ export function SiteHeader() {
             {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
 
-          {menuOpen && (
-            <div
-              id="site-header-mobile-menu"
-              role="menu"
-              className="absolute right-0 top-12 z-50 min-w-[240px] overflow-hidden rounded-2xl border border-white/10 bg-[#0b1426]/95 py-2 shadow-2xl shadow-black/40 backdrop-blur-xl md:hidden"
-            >
-              {NAV_ITEMS.map((item) => {
-                const active = navItemActive(item.href, pathname);
-                return (
+          <AnimatePresence initial={false}>
+            {menuOpen && (
+              <motion.div
+                key="site-header-mobile-menu"
+                id="site-header-mobile-menu"
+                role="menu"
+                variants={mobilePanel}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                style={{ transformOrigin: "top right" }}
+                className="q-shadow-lux absolute right-0 top-12 z-50 min-w-[240px] overflow-hidden rounded-2xl border border-white/10 bg-[#0b1426]/95 py-2 backdrop-blur-xl md:hidden"
+              >
+                {NAV_ITEMS.map((item) => {
+                  const active = navItemActive(item.href, pathname);
+                  return (
+                    <motion.div key={item.href} variants={mobileItem}>
+                      <Link
+                        href={item.href}
+                        role="menuitem"
+                        className={`block px-4 py-2.5 text-[14px] font-medium transition-colors ${
+                          active
+                            ? "bg-white/10 text-white"
+                            : "text-white/80 hover:bg-white/5 hover:text-white"
+                        }`}
+                      >
+                        {item.label}
+                      </Link>
+                    </motion.div>
+                  );
+                })}
+                {/* Enterprise CTA — visually separated from the main
+                    nav list so it still reads as a distinct, authed
+                    destination on mobile. The divider participates in
+                    the stagger so the "curtain drop" stays coherent. */}
+                <motion.div
+                  variants={mobileItem}
+                  className="my-1 border-t border-white/10"
+                  aria-hidden
+                />
+                <motion.div variants={mobileItem}>
                   <Link
-                    key={item.href}
-                    href={item.href}
+                    href={ENTERPRISE_HREF}
                     role="menuitem"
-                    className={`block px-4 py-2.5 text-[14px] font-medium transition ${
-                      active
-                        ? "bg-white/10 text-white"
-                        : "text-white/80 hover:bg-white/5 hover:text-white"
+                    className={`flex items-center gap-2 px-4 py-2.5 text-[14px] font-medium transition-colors ${
+                      enterpriseActive(pathname)
+                        ? "bg-[#1A56DB]/25 text-white"
+                        : "text-[#dbe7ff] hover:bg-[#1A56DB]/20 hover:text-white"
                     }`}
                   >
-                    {item.label}
+                    <Building2 className="h-4 w-4" />
+                    Enterprise
                   </Link>
-                );
-              })}
-              {/* Enterprise CTA — visually separated from the main
-                  nav list so it still reads as a distinct, authed
-                  destination on mobile. */}
-              <div className="my-1 border-t border-white/10" aria-hidden />
-              <Link
-                href={ENTERPRISE_HREF}
-                role="menuitem"
-                className={`flex items-center gap-2 px-4 py-2.5 text-[14px] font-medium transition ${
-                  enterpriseActive(pathname)
-                    ? "bg-[#1A56DB]/25 text-white"
-                    : "text-[#dbe7ff] hover:bg-[#1A56DB]/20 hover:text-white"
-                }`}
-              >
-                <Building2 className="h-4 w-4" />
-                Enterprise
-              </Link>
-            </div>
-          )}
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </header>

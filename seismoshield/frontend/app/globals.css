@@ -334,6 +334,37 @@
   display: none;
 }
 
+/* Site-wide: hide the scrollbar on every scrollable surface while
+   keeping the scroll interaction intact. The user asked for every
+   scrollable screen to stay scrollable without showing the bar —
+   the simplest and most resilient way is to target html/body +
+   any element so we don't have to remember the utility class on
+   each new scroller.
+   
+   We still export `.scrollbar-hide` above for targeted use (e.g.
+   marketing cards) — the global rule below just makes the default
+   surface-level scrollbar invisible. Scroll still works via wheel,
+   trackpad, touch, keyboard, spacebar, and the browser's own
+   overscroll affordances. */
+html,
+body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+* {
+  scrollbar-width: none;
+}
+
 /* 360° panorama — hotspot dot → glassmorphism card pop-in */
 @keyframes panorama-pop {
   0% {

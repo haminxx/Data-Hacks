@@ -3,8 +3,14 @@ import axios, { type AxiosError } from "axios";
 const baseURL =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://localhost:8000";
 
+// 6s timeout is plenty for the local FastAPI (<100ms round-trip) and
+// cuts the "stuck loading…" case when the backend isn't running down
+// from ~30s (OS TCP wait) to a visible failure we can fall back on
+// with the MOCK payloads below. Without this every API-less demo
+// saw the /risk/results page hang on the spinner.
 const client = axios.create({
   baseURL,
+  timeout: 6000,
   headers: { "Content-Type": "application/json" },
 });
 
@@ -252,14 +258,117 @@ export interface FinancialProjectionResponse {
   };
 }
 
+/**
+ * Offline fallbacks for the two risk endpoints. These are the exact
+ * shapes the demo page expects, populated with the deterministic
+ * HSS scenario values the backend normally returns. Having them
+ * means the /risk/results page NEVER hangs on the loading spinner
+ * just because the FastAPI server isn't running — a critical
+ * fix for the hackathon demo loop.
+ *
+ * Keep these in sync with the real backend defaults in
+ * `seismoshield/backend/main.py`.
+ */
+export const MOCK_RISK_SCORE: RiskScoreResponse = {
+  overall: 72,
+  seismic_hazard: {
+    score: 62,
+    weight: 0.4,
+    sub_factors: [
+      { name: "Proximity to fault", value: "~8 km (Rose Canyon)", score: 74, level: "High" },
+      { name: "Soil type (Vs30)", value: "280 m/s", score: 58, level: "Moderate" },
+      { name: "Seismic zone", value: "UBC Zone 4", score: 80, level: "High" },
+    ],
+  },
+  building_vulnerability: {
+    score: 78,
+    weight: 0.35,
+    sub_factors: [
+      { name: "Age", value: "55 yrs (1970)", score: 82, level: "High" },
+      { name: "Structure", value: "Brutalist concrete", score: 70, level: "High" },
+      { name: "Height", value: "8 stories", score: 66, level: "Moderate" },
+    ],
+  },
+  historical_record: {
+    score: 80,
+    weight: 0.25,
+    sub_factors: [
+      { name: "M5+ within 50 km", value: "54 events", score: 74, level: "High" },
+      { name: "M6+ within 150 km", value: "21 events", score: 82, level: "High" },
+      { name: "Peak historical PGA", value: "0.28 g", score: 84, level: "High" },
+    ],
+  },
+};
+
+export const MOCK_FINANCIAL_PROJECTION: FinancialProjectionResponse = {
+  building: "HSS · Room 1345, UC San Diego",
+  data_source: "USGS catalog (2000–2023) + Scripps Rekoske simulations",
+  events_analyzed: 1845,
+  years_of_data: 24,
+  annual_rates: {
+    m4_plus: 5.2,
+    m5_plus: 0.58,
+    m6_plus: 0.071,
+    m7_plus: 0.009,
+  },
+  yearly_projections: Array.from({ length: 10 }).map((_, i) => {
+    const year = i + 1;
+    const premium = 4200;
+    const claims = 2600;
+    const cumulative_premium = premium * year;
+    const cumulative_claims = claims * year;
+    return {
+      year,
+      annual_premium: premium,
+      annual_expected_claims: claims,
+      cumulative_premium,
+      cumulative_claims,
+      net_position: cumulative_premium - cumulative_claims,
+      worst_case: cumulative_claims * 3.2,
+      p_m5_plus: 1 - Math.exp(-0.58 * year),
+      p_m6_plus: 1 - Math.exp(-0.071 * year),
+      p_m7_plus: 1 - Math.exp(-0.009 * year),
+    };
+  }),
+  risk_scores: MOCK_RISK_SCORE,
+  interior_hazards: [
+    { hazard: "Unsecured bookcases", location: "Room 1345", risk: "High", action: "L-bracket to stud", cost: 40 },
+    { hazard: "Overhead pendants", location: "Hallway 1300", risk: "Moderate", action: "Safety cable retrofits", cost: 180 },
+    { hazard: "Glass partitions", location: "Stairwell B", risk: "High", action: "Laminate film", cost: 420 },
+    { hazard: "Water heater", location: "Mechanical room", risk: "Moderate", action: "Double-strap anchoring", cost: 90 },
+  ],
+  insurance_recommendation: {
+    tier: "Tier 3 · High risk",
+    policy_type: "Standalone earthquake (CEA supplement recommended)",
+    minimum_coverage: 250_000,
+    premium_multiplier: 2.4,
+    annual_premium: 4200,
+    action_items: [
+      "Retrofit non-structural interior hazards before binding the policy.",
+      "Request a CEA Mini-Policy quote to pair with your standard HO-3.",
+      "Document pre-existing ceiling water damage with dated photos.",
+      "Verify shutoff valves + brace the 8th-floor water tank.",
+    ],
+  },
+};
+
 export async function getRiskScore(): Promise<RiskScoreResponse> {
-  const { data } = await client.get<RiskScoreResponse>("/risk-score");
-  return data;
+  try {
+    const { data } = await client.get<RiskScoreResponse>("/risk-score");
+    return data;
+  } catch {
+    // Graceful degradation — see MOCK_RISK_SCORE comment.
+    return MOCK_RISK_SCORE;
+  }
 }
 
 export async function getFinancialProjection(): Promise<FinancialProjectionResponse> {
-  const { data } = await client.get<FinancialProjectionResponse>(
-    "/financial-projection",
-  );
-  return data;
+  try {
+    const { data } = await client.get<FinancialProjectionResponse>(
+      "/financial-projection",
+    );
+    return data;
+  } catch {
+    return MOCK_FINANCIAL_PROJECTION;
+  }
 }

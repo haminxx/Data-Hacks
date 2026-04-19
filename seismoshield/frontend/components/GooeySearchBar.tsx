@@ -198,11 +198,24 @@ function InfoIcon({
 // Keep the pill horizontally centered in its wrapper at all times —
 // step2 only grows the width, no translation, so the search glyph stays
 // exactly at center as the box expands.
-const buttonVariants: Variants = {
+//
+// Expanded width is responsive: on phones we want the pill to fit
+// within the viewport with a safe gutter on each side. We compute a
+// clamp at mount time so framer-motion's inline `width` animation
+// honours the viewport — pure `calc(min(360, 92vw))` inside the
+// variants would break motion's transitions.
+function computeExpandedWidth(): number {
+  if (typeof window === "undefined") return 360;
+  const vw = window.innerWidth || 360;
+  // 92vw on small phones, up to 360px on tablets/desktop.
+  return Math.min(360, Math.max(220, Math.round(vw * 0.92)));
+}
+
+const makeButtonVariants = (expanded: number): Variants => ({
   initial: { width: 56 },
   step1: { width: 56 },
-  step2: { width: 360 },
-};
+  step2: { width: expanded },
+});
 
 const iconVariants: Variants = {
   hidden: { opacity: 0, scale: 0.6 },
@@ -278,9 +291,24 @@ export function GooeySearchBar<T extends SearchableItem>({
   const [searchText, setSearchText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [searchData, setSearchData] = useState<T[]>([]);
+  const [expandedWidth, setExpandedWidth] = useState<number>(360);
 
   const debounced = useDebounce(searchText, 250);
   const isUnsupported = useMemo(() => isUnsupportedBrowser(), []);
+  const buttonVariants = useMemo(
+    () => makeButtonVariants(expandedWidth),
+    [expandedWidth],
+  );
+
+  // Recompute the expanded width on mount + resize so the search pill
+  // always fits within the map viewport on phones, tablets, and
+  // desktops alike.
+  useEffect(() => {
+    const sync = () => setExpandedWidth(computeExpandedWidth());
+    sync();
+    window.addEventListener("resize", sync);
+    return () => window.removeEventListener("resize", sync);
+  }, []);
 
   // Expand → focus the input. Collapse → clear state.
   useEffect(() => {

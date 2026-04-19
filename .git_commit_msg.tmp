@@ -1,0 +1,34 @@
+feat(ui): mobile-responsive map & header, global scrollbar hide, manual enterprise login, risk loading fix
+
+Enterprise
+- Login page no longer auto-redirects authed visitors; every visit to
+  the Enterprise CTA shows the (auto-filled) login form so the user
+  must explicitly click "Sign in" before landing on /enterprise/risk-assessment
+- /enterprise index now always redirects to /enterprise/login
+
+Risk assessment loading fix
+- Add a 6s axios client timeout so failed/unreachable API calls bail
+  out quickly instead of hanging the socket for ~30s
+- Provide full MOCK_RISK_SCORE + MOCK_FINANCIAL_PROJECTION payloads
+  and make getRiskScore / getFinancialProjection fall back to them
+  on error — /risk/results now renders even when the backend isn't
+  running, fixing the "loading screen stuck" case
+
+Map + street-view responsive
+- GooeySearchBar expanded width is now computed at mount time and on
+  resize: clamp(220, 92vw, 360) — the search pill fits within the
+  map viewport on any phone without losing desktop sizing
+- Back-to-globe button already safe-area-aware (kept)
+
+Mobile hamburger stagger
+- Wrap the mobile menu panel in AnimatePresence + motion variants
+  so each nav row cascades top → bottom when opened (staggerChildren
+  0.06, blur+translate per row). Enterprise row participates in the
+  same cascade. Uses q-shadow-lux for the menu panel.
+
+Global scrollbar hide
+- Hide the native scrollbar on every scrollable surface while
+  preserving the scroll interaction (wheel/touch/keyboard). Keeps
+  the existing .scrollbar-hide utility for targeted use.
+
+Verified: lints clean, tsc --noEmit clean, next build green (16 routes)

@@ -1,6 +1,6 @@
 "use client";
 
-import { hasEnterpriseSession, setEnterpriseSession } from "@/lib/enterprise-session";
+import { setEnterpriseSession } from "@/lib/enterprise-session";
 import { ArrowRight, Building2, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -47,12 +47,12 @@ export default function EnterpriseLoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (hasEnterpriseSession()) {
-      router.replace("/enterprise/risk-assessment");
-      return;
-    }
-    // Fresh random credentials on each mount so the form reads as a
-    // real populated login rather than an obvious placeholder.
+    // Important: we do NOT auto-redirect authed visitors here any more.
+    // Product direction is that the Enterprise CTA always shows the
+    // login form first — the viewer must explicitly click "Sign in"
+    // before landing on /enterprise/risk-assessment. This keeps the
+    // demo's narrative intact (authenticate → see the console) even
+    // on return visits.
     const creds = randomDemoCreds();
     setEmail(creds.email);
     setPassword(creds.password);
