@@ -8,6 +8,23 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        background: "#0f172a",
+        foreground: "#f8fafc",
+        card: {
+          DEFAULT: "#0f172a",
+          foreground: "#f8fafc",
+        },
+        popover: {
+          DEFAULT: "#1e293b",
+          foreground: "#f8fafc",
+        },
+        muted: {
+          DEFAULT: "#1e293b",
+          foreground: "#94a3b8",
+        },
+        border: "#334155",
+        input: "#334155",
+        ring: "rgba(26, 86, 219, 0.45)",
         brand: {
           DEFAULT: "#1A56DB",
           bright: "#3b82f6",

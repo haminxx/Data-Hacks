@@ -7,9 +7,6 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -17,6 +14,7 @@ import {
   YAxis,
 } from "recharts";
 
+import { FinancialProjectionsChart } from "@/components/enterprise/FinancialProjectionsChart";
 import { RiskSpeedometer } from "@/components/risk/RiskSpeedometer";
 import {
   getFinancialProjection,
@@ -325,60 +323,8 @@ export default function EnterpriseHSSPage() {
               </button>
             ))}
           </div>
-          <div className="mt-4 h-[320px] w-full rounded-xl bg-[#0F172A] p-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                <XAxis dataKey="year" stroke="#94a3b8" label={{ value: "Year", fill: "#94a3b8", position: "bottom" }} />
-                <YAxis
-                  stroke="#94a3b8"
-                  tickFormatter={(v) =>
-                    `$${(v / 1_000_000).toFixed(1)}M`
-                  }
-                />
-                <Tooltip
-                  content={({ active, payload, label }) => {
-                    if (!active || !payload?.length) return null;
-                    const y = Number(label);
-                    const row = chartData.find((d) => d.year === y);
-                    return (
-                      <div className="rounded-lg border border-slate-600 bg-[#1e293b] p-3 text-xs text-slate-100 shadow-xl">
-                        <p className="mb-2 font-semibold text-white">Year {label}</p>
-                        <ul className="space-y-1">
-                          {payload.map((p) => (
-                            <li
-                              key={String(p.dataKey)}
-                              className="flex justify-between gap-6"
-                            >
-                              <span style={{ color: p.color }}>{p.name}</span>
-                              <span className="tabular-nums text-white">
-                                ${Number(p.value).toLocaleString()}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                        {row != null && (
-                          <p className="mt-2 border-t border-white/10 pt-2 text-[11px] text-red-200/95">
-                            Worst case stress: $
-                            {row.worst_case.toLocaleString()}
-                          </p>
-                        )}
-                      </div>
-                    );
-                  }}
-                />
-                <Legend />
-                <ReferenceLine y={0} stroke="#f87171" strokeDasharray="4 4" label="Break Even" />
-                <ReferenceLine
-                  x={horizon}
-                  stroke="#1A56DB"
-                  strokeDasharray="3 3"
-                />
-                <Line type="monotone" dataKey="cumulative_premium" name="Premium Revenue" stroke="#1A56DB" strokeWidth={2} dot={false} isAnimationActive />
-                <Line type="monotone" dataKey="cumulative_claims" name="Expected Claims" stroke="#DC2626" strokeWidth={2} dot={false} isAnimationActive />
-                <Line type="monotone" dataKey="net_position" name="Net Position" stroke="#16A34A" strokeWidth={2} strokeDasharray="5 5" dot={false} isAnimationActive />
-              </LineChart>
-            </ResponsiveContainer>
+          <div className="mt-4 rounded-xl bg-[#0F172A] p-2">
+            <FinancialProjectionsChart data={chartData} horizonYear={horizon} />
           </div>
 
           {horizonRow && (

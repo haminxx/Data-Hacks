@@ -17,9 +17,12 @@
     "@deck.gl/react": "^9.3.1",
     "@google/generative-ai": "^0.24.1",
     "@googlemaps/js-api-loader": "^1.16.10",
+    "@radix-ui/react-select": "^2.2.6",
+    "@radix-ui/react-slot": "^1.2.4",
     "@react-three/drei": "^9.122.0",
     "@react-three/fiber": "^8.18.0",
     "axios": "^1.7.9",
+    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cobe": "^0.6.3",
     "framer-motion": "^12.38.0",
@@ -30,6 +33,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "recharts": "^2.15.0",
+    "tailwind-merge": "^3.5.0",
     "three": "^0.170.0"
   },
   "devDependencies": {
