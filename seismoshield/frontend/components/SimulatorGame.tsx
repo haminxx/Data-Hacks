@@ -155,6 +155,7 @@ export default function SimulatorGame() {
     getStartRate(6.5, "earthquake"),
   );
   const [isShaking, setIsShaking] = useState<boolean>(false);
+  const [shakeClass, setShakeClass] = useState<string>("");
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
   const [animationDirection, setAnimationDirection] = useState<"up" | "down" | null>(
     null,
@@ -200,8 +201,42 @@ export default function SimulatorGame() {
       ? selectedAnswers.get(activeZone.id) ?? null
       : null;
 
-  const shakeClass =
-    magnitude < 5 ? "shake-low" : magnitude < 6.5 ? "shake-medium" : "shake-high";
+  const getShakeConfig = (mag: number) => {
+    if (mag < 5.0)
+      return { cls: "shake-low", dur: 600, overlay: "rgba(255,255,255,0.03)" };
+    if (mag < 6.0)
+      return { cls: "shake-medium", dur: 800, overlay: "rgba(255,200,100,0.06)" };
+    if (mag < 6.5)
+      return { cls: "shake-strong", dur: 900, overlay: "rgba(255,150,50,0.10)" };
+    if (mag < 7.5)
+      return { cls: "shake-severe", dur: 1000, overlay: "rgba(220,50,50,0.15)" };
+    return { cls: "shake-extreme", dur: 1200, overlay: "rgba(180,0,0,0.22)" };
+  };
+
+  const triggerShake = useCallback(() => {
+    if (isShaking) return;
+    const config = getShakeConfig(magnitude);
+    setShakeClass(config.cls);
+    setIsShaking(true);
+    window.setTimeout(() => {
+      setIsShaking(false);
+      setShakeClass("");
+    }, config.dur);
+  }, [isShaking, magnitude]);
+
+  useEffect(() => {
+    if (gameState === "playing") {
+      triggerShake();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameState]);
+
+  useEffect(() => {
+    if (gameState === "playing") {
+      triggerShake();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [magnitude]);
 
   const tryOpenQuestionForCurrentZone = (yaw: number) => {
     if (gameState !== "playing") return;
@@ -292,9 +327,7 @@ export default function SimulatorGame() {
     setSurvivalRate(nextRate);
     setAnimationDirection(correct ? "up" : "down");
     setIsAnimating(true);
-    setIsShaking(true);
 
-    window.setTimeout(() => setIsShaking(false), 1500);
     window.setTimeout(() => setIsAnimating(false), 800);
     window.setTimeout(() => setShowContinue(true), 2500);
 
@@ -302,6 +335,7 @@ export default function SimulatorGame() {
       setLastWrongAnswer(activeQuestion.options[index] ?? "");
       setLastWrongExplanation(activeQuestion.wrongExplanation);
       setLastWrongRealHazard(activeQuestion.realHazardNote);
+      window.setTimeout(() => triggerShake(), 200);
     }
 
     if (nextRate <= 0) {
@@ -364,7 +398,11 @@ export default function SimulatorGame() {
   };
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-slate-950">
+    <div
+      className={`relative h-screen w-screen overflow-hidden bg-slate-950 ${
+        isShaking ? shakeClass : ""
+      }`}
+    >
       <Pannellum
         id="hss-panorama"
         sceneId="hss-scene"
@@ -410,10 +448,6 @@ export default function SimulatorGame() {
       )}
       {(condition === "earthquake_dark" || condition === "earthquake_fire_dark") && (
         <div className="dark-overlay pointer-events-none fixed inset-0 z-[2] bg-[rgba(0,0,0,0.7)]" />
-      )}
-
-      {isShaking && (
-        <div className={`pointer-events-none fixed inset-0 z-[5] ${shakeClass}`} />
       )}
 
       {gameState === "playing" && currentZone && activeQuestionZoneId == null && (
@@ -511,6 +545,9 @@ export default function SimulatorGame() {
           answeredZones={answeredZones}
           buildingHazards={BUILDING_HAZARDS}
           currentYaw={currentYaw}
+          gameState={gameState}
+          isShaking={isShaking}
+          onSimulateShake={triggerShake}
         />
       )}
 
@@ -604,6 +641,23 @@ export default function SimulatorGame() {
           }}
         />
       )}
+
+      {isShaking &&
+        (() => {
+          const config = getShakeConfig(magnitude);
+          return (
+            <div
+              style={{
+                position: "fixed",
+                inset: 0,
+                zIndex: 50,
+                pointerEvents: "none",
+                backgroundColor: config.overlay,
+                animation: `shakeFlash ${config.dur}ms ease-out forwards`,
+              }}
+            />
+          );
+        })()}
     </div>
   );
 }

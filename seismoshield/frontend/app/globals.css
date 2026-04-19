@@ -652,3 +652,75 @@
     transition: none !important;
   }
 }
+
+/* Simulator quake — magnitude-tiered shake + flash overlay */
+@keyframes shakeLow {
+  0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
+  20% { transform: translate(-3px, 2px) rotate(-0.3deg); }
+  40% { transform: translate(3px, -1px) rotate(0.3deg); }
+  60% { transform: translate(-2px, 3px) rotate(-0.2deg); }
+  80% { transform: translate(2px, -2px) rotate(0.2deg); }
+}
+
+@keyframes shakeMedium {
+  0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
+  10% { transform: translate(-7px, 4px) rotate(-0.8deg); }
+  25% { transform: translate(7px, -4px) rotate(0.8deg); }
+  40% { transform: translate(-5px, 6px) rotate(-0.6deg); }
+  55% { transform: translate(6px, -3px) rotate(0.7deg); }
+  70% { transform: translate(-4px, 5px) rotate(-0.5deg); }
+  85% { transform: translate(5px, -4px) rotate(0.6deg); }
+}
+
+@keyframes shakeStrong {
+  0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
+  8%  { transform: translate(-12px, 6px) rotate(-1.5deg); }
+  20% { transform: translate(11px, -7px) rotate(1.4deg); }
+  33% { transform: translate(-10px, 9px) rotate(-1.2deg); }
+  46% { transform: translate(12px, -5px) rotate(1.5deg); }
+  58% { transform: translate(-9px, 8px) rotate(-1.1deg); }
+  71% { transform: translate(10px, -6px) rotate(1.3deg); }
+  83% { transform: translate(-8px, 7px) rotate(-1.0deg); }
+}
+
+@keyframes shakeSevere {
+  0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
+  6%  { transform: translate(-20px, 10px) rotate(-2.5deg); }
+  15% { transform: translate(19px, -11px) rotate(2.4deg); }
+  25% { transform: translate(-18px, 13px) rotate(-2.2deg); }
+  35% { transform: translate(20px, -9px) rotate(2.5deg); }
+  45% { transform: translate(-17px, 12px) rotate(-2.1deg); }
+  55% { transform: translate(18px, -10px) rotate(2.3deg); }
+  65% { transform: translate(-16px, 11px) rotate(-2.0deg); }
+  75% { transform: translate(17px, -8px) rotate(2.2deg); }
+  85% { transform: translate(-15px, 10px) rotate(-1.9deg); }
+}
+
+@keyframes shakeExtreme {
+  0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
+  5%  { transform: translate(-35px, 15px) rotate(-4deg); }
+  12% { transform: translate(33px, -17px) rotate(3.8deg); }
+  20% { transform: translate(-30px, 18px) rotate(-3.5deg); }
+  28% { transform: translate(35px, -14px) rotate(4deg); }
+  36% { transform: translate(-28px, 16px) rotate(-3.3deg); }
+  44% { transform: translate(32px, -15px) rotate(3.7deg); }
+  52% { transform: translate(-27px, 17px) rotate(-3.2deg); }
+  60% { transform: translate(30px, -13px) rotate(3.6deg); }
+  68% { transform: translate(-25px, 15px) rotate(-3.0deg); }
+  76% { transform: translate(28px, -12px) rotate(3.4deg); }
+  84% { transform: translate(-23px, 14px) rotate(-2.8deg); }
+  92% { transform: translate(25px, -11px) rotate(3.2deg); }
+}
+
+@keyframes shakeFlash {
+  0% { opacity: 1; }
+  30% { opacity: 0.6; }
+  60% { opacity: 0.8; }
+  100% { opacity: 0; }
+}
+
+.shake-low { animation: shakeLow 0.6s ease-in-out; }
+.shake-medium { animation: shakeMedium 0.8s ease-in-out; }
+.shake-strong { animation: shakeStrong 0.9s ease-in-out; }
+.shake-severe { animation: shakeSevere 1.0s ease-in-out; }
+.shake-extreme { animation: shakeExtreme 1.2s ease-in-out; }

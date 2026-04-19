@@ -17,6 +17,9 @@ type ScenarioCardProps = {
   answeredZones: Set<number>;
   buildingHazards: BuildingHazard[];
   currentYaw: number;
+  gameState: string;
+  isShaking: boolean;
+  onSimulateShake: () => void;
 };
 
 const CONDITIONS: Array<{ value: ScenarioCondition; label: string; emoji: string }> = [
@@ -54,6 +57,9 @@ export default function ScenarioCard({
   currentZone,
   answeredZones,
   buildingHazards,
+  gameState,
+  isShaking,
+  onSimulateShake,
 }: ScenarioCardProps) {
   // Phones: default collapsed so the 360° view has breathing room.
   // Desktop: always expanded — the sidebar has room for the full rail.
@@ -206,6 +212,30 @@ export default function ScenarioCard({
       </section>
 
       <Divider />
+
+      {gameState === "playing" && (
+        <button
+          type="button"
+          onClick={onSimulateShake}
+          disabled={isShaking}
+          style={{
+            width: "100%",
+            borderRadius: "10px",
+            padding: "10px 14px",
+            background: "rgba(220, 38, 38, 0.15)",
+            border: "1px solid rgba(153, 27, 27, 0.5)",
+            color: "#F87171",
+            fontSize: "13px",
+            fontWeight: 600,
+            cursor: isShaking ? "not-allowed" : "pointer",
+            opacity: isShaking ? 0.5 : 1,
+            transition: "all 0.2s ease",
+            marginBottom: "12px",
+          }}
+        >
+          🌍 Simulate Shake
+        </button>
+      )}
 
       <section>
         <SectionTitle>Progress</SectionTitle>
