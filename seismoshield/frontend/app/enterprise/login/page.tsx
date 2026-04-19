@@ -6,6 +6,40 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 
+// Random but stable-per-mount demo credentials. The enterprise
+// button is a guided demo — we still want it to *look* like a real
+// login, so we pre-fill a believable email + 10-char password every
+// time the page mounts. This keeps the one-click "sign in → risk
+// assessment" flow the user asked for.
+const DEMO_EMAIL_SEEDS = [
+  "alex.morgan",
+  "priya.shah",
+  "j.carter",
+  "riley.nakamura",
+  "samir.patel",
+  "nora.okafor",
+];
+const DEMO_COMPANIES = [
+  "northlake-re.com",
+  "westcoast-insure.io",
+  "pacificcap.com",
+  "quarte-partners.com",
+];
+
+function randomDemoCreds(): { email: string; password: string } {
+  const seed =
+    DEMO_EMAIL_SEEDS[
+      Math.floor(Math.random() * DEMO_EMAIL_SEEDS.length)
+    ];
+  const company =
+    DEMO_COMPANIES[Math.floor(Math.random() * DEMO_COMPANIES.length)];
+  // 10-char alphanumeric password — looks real, changes every visit.
+  const pwd =
+    Math.random().toString(36).slice(2, 8) +
+    Math.random().toString(36).slice(2, 6);
+  return { email: `${seed}@${company}`, password: pwd };
+}
+
 export default function EnterpriseLoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("demo@seismoshield.com");
@@ -14,11 +48,16 @@ export default function EnterpriseLoginPage() {
 
   useEffect(() => {
     if (hasEnterpriseSession()) {
-      router.replace("/enterprise/dashboard");
+      router.replace("/enterprise/risk-assessment");
       return;
     }
-    router.prefetch("/enterprise/dashboard");
+    // Fresh random credentials on each mount so the form reads as a
+    // real populated login rather than an obvious placeholder.
+    const creds = randomDemoCreds();
+    setEmail(creds.email);
+    setPassword(creds.password);
     router.prefetch("/enterprise/risk-assessment");
+    router.prefetch("/enterprise/dashboard");
   }, [router]);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -28,7 +67,10 @@ export default function EnterpriseLoginPage() {
     setSubmitting(true);
     window.setTimeout(() => {
       setEnterpriseSession();
-      router.push("/enterprise/dashboard");
+      // User-requested flow: login → risk assessment (not dashboard).
+      // The portfolio dashboard is still reachable from the risk
+      // assessment CTA grid.
+      router.push("/enterprise/risk-assessment");
     }, 450);
   };
 

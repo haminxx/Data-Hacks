@@ -14,10 +14,13 @@ const NAV_ITEMS = [
 
 // Enterprise is surfaced as a distinct right-aligned CTA (with its
 // own accent pill styling), so it's kept out of the centred NAV_ITEMS
-// list. `/enterprise` itself is a smart redirect — authed users go
-// straight to the dashboard, everyone else lands on the login page
-// (see app/enterprise/page.tsx + lib/enterprise-session.ts).
-const ENTERPRISE_HREF = "/enterprise";
+// list. The CTA now *always* routes through the login gate first —
+// credentials are pre-filled in the login page for the demo, so the
+// single click from login drops the user straight into
+// /enterprise/risk-assessment. We still recognise any /enterprise/*
+// route as active for styling.
+const ENTERPRISE_HREF = "/enterprise/login";
+const ENTERPRISE_ROOT = "/enterprise";
 
 const HIDDEN_ROUTES = new Set<string>(["/map"]);
 
@@ -29,7 +32,10 @@ function navItemActive(href: string, pathname: string): boolean {
 }
 
 function enterpriseActive(pathname: string): boolean {
-  return pathname === ENTERPRISE_HREF || pathname.startsWith(`${ENTERPRISE_HREF}/`);
+  return (
+    pathname === ENTERPRISE_ROOT ||
+    pathname.startsWith(`${ENTERPRISE_ROOT}/`)
+  );
 }
 
 export function SiteHeader() {

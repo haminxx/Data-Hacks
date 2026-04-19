@@ -20,6 +20,7 @@ import {
   RiskSpeedometer,
   useAnimatedRiskScore,
 } from "@/components/risk/RiskSpeedometer";
+import { Reveal } from "@/components/ui/Reveal";
 import {
   getFinancialProjection,
   getRiskScore,
@@ -249,16 +250,21 @@ export default function RiskResultsPage() {
       <div className="mx-auto max-w-6xl px-4 lg:px-6">
         <div className="flex flex-col gap-5 lg:gap-6">
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:items-stretch lg:gap-x-8">
-            <div className="flex min-h-[20rem] flex-col lg:h-full lg:min-h-0">
+            <Reveal
+              index={0}
+              inView={false}
+              className="flex min-h-[20rem] flex-col lg:h-full lg:min-h-0"
+            >
               <HSSBuildingPreview
                 fillGridCell
                 className="min-h-0 flex-1"
               />
-            </div>
+            </Reveal>
 
+            <Reveal index={1} inView={false} className="flex h-full min-h-0 flex-col">
             <section
               aria-label="Risk breakdown"
-              className="flex h-full min-h-0 flex-col rounded-2xl border border-white/[0.1] bg-[#0b1224]/90 p-2.5 shadow-[0_24px_56px_-36px_rgba(0,0,0,0.88)] ring-1 ring-white/[0.05] lg:overflow-y-auto"
+              className="flex h-full min-h-0 flex-col rounded-2xl border border-white/[0.1] bg-[#0b1224]/90 p-2.5 ring-1 ring-white/[0.05] q-shadow-lux lg:overflow-y-auto"
             >
             <p className="mb-1.5 shrink-0 px-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">
               Risk index
@@ -312,9 +318,10 @@ export default function RiskResultsPage() {
               />
             </div>
           </section>
+            </Reveal>
           </div>
 
-          <div className="rounded-2xl border border-white/[0.09] bg-[#0b1224]/70 p-5 shadow-[0_20px_50px_-36px_rgba(0,0,0,0.85)] backdrop-blur-sm lg:flex lg:min-h-0 lg:flex-col">
+          <Reveal index={2} className="rounded-2xl border border-white/[0.09] bg-[#0b1224]/70 p-5 q-shadow-soft backdrop-blur-sm lg:flex lg:min-h-0 lg:flex-col">
             <div className="flex items-center gap-2 border-b border-white/[0.06] pb-4">
               <Building2 className="h-5 w-5 text-[#1A56DB]" aria-hidden />
               <div>
@@ -378,9 +385,9 @@ export default function RiskResultsPage() {
                 </div>
               </div>
             </dl>
-          </div>
+          </Reveal>
 
-          <div className="relative flex min-h-0 flex-col overflow-hidden rounded-2xl border border-[#1A56DB]/25 bg-[#0b1224] p-5 shadow-[0_20px_50px_-30px_rgba(26,86,219,0.25)] lg:h-full">
+          <Reveal index={3} className="relative flex min-h-0 flex-col overflow-hidden rounded-2xl border border-[#1A56DB]/25 bg-[#0b1224] p-5 q-shadow-accent lg:h-full">
             <div
               aria-hidden
               className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-[#1A56DB]/10 blur-3xl"
@@ -444,7 +451,7 @@ export default function RiskResultsPage() {
                 Get insurance quote
               </button>
             </div>
-          </div>
+          </Reveal>
         </div>
       </div>
 

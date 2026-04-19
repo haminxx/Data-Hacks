@@ -85,10 +85,14 @@ export default function EnterpriseDashboardPage() {
             { label: "Annual Claims Exposure", value: "$2.1M", icon: "📊", color: "text-orange-300" },
           ].map((c) => (
             <RevealItem key={c.label}>
-              <div className="rounded-xl border border-white/[0.08] bg-[#0F172A] p-4 transition hover:border-white/[0.15] hover:bg-[#111e33]">
-                <span className="text-2xl">{c.icon}</span>
-                <p className={`mt-2 text-2xl font-bold ${c.color}`}>{c.value}</p>
-                <p className="mt-1 text-xs text-white/45">{c.label}</p>
+              <div className="q-shadow-soft q-pressable group relative overflow-hidden rounded-xl border border-white/[0.08] bg-[#0F172A] p-4 transition-colors hover:border-white/[0.15] hover:bg-[#111e33]">
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-[#1A56DB]/0 blur-2xl transition-colors duration-500 group-hover:bg-[#1A56DB]/15"
+                />
+                <span className="relative text-2xl">{c.icon}</span>
+                <p className={`relative mt-2 text-2xl font-bold ${c.color}`}>{c.value}</p>
+                <p className="relative mt-1 text-xs text-white/45">{c.label}</p>
               </div>
             </RevealItem>
           ))}

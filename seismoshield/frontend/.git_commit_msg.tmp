@@ -1,0 +1,34 @@
+feat(ui): enterprise login gate, staggered risk cards, mobile globe, luxe shadows
+
+Enterprise flow
+- Header "Enterprise" CTA now always routes to /enterprise/login
+- Login page pre-fills believable random credentials every mount
+- Successful login sends the user straight to /enterprise/risk-assessment
+  (the dashboard remains one click away from the CTA grid there)
+
+/risk/results cards
+- Wrap the 3D preview, risk breakdown, building info, and insurance
+  cards in <Reveal> so they animate in one-by-one (staggered index)
+- Below-fold cards use whileInView so scrolling the report triggers
+  each card's blur/translate entrance
+
+Performance
+- HSSBuildingPreview: IntersectionObserver gates frameloop between
+  "always" and "demand" (no GPU work when offscreen), DPR capped to
+  [1, 1.5], antialias only on desktop, shadows disabled, dynamic
+  import so no three.js ships during SSR — fixes the /risk/results
+  freezing on mid-range laptops
+
+Home page / mobile
+- Globe parks clearly below the Demo button on phones (translate Y
+  45%, width capped at 280px) so it never overlaps the CTA stack
+- On Demo the globe slides up + zooms into the card centre in one
+  eased transform — reads as "slide up, then continue flying"
+
+Luxury depth shadows
+- New q-shadow-lux / q-shadow-soft / q-shadow-accent utilities with
+  three-layer ambient + key-light + inset-highlight shadows
+- Applied to the hero card, enterprise KPI & CTA cards, and the
+  /risk/results info+insurance sections for a consistent premium feel
+
+Verified: lints clean, tsc --noEmit clean, next build green (16 routes)

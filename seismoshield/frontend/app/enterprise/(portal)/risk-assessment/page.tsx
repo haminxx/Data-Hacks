@@ -92,46 +92,62 @@ export default function EnterpriseRiskAssessmentPage() {
               className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
             >
               <RevealItem>
-                <div className="rounded-xl border border-white/[0.08] bg-[#0F172A] p-5 transition hover:border-white/[0.15] hover:bg-[#111e33]">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-white/40">
+                <div className="q-shadow-soft q-pressable group relative overflow-hidden rounded-xl border border-white/[0.08] bg-[#0F172A] p-5 transition-colors hover:border-white/[0.15] hover:bg-[#111e33]">
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-[#1A56DB]/0 blur-2xl transition-colors duration-500 group-hover:bg-[#1A56DB]/20"
+                  />
+                  <p className="relative text-[11px] font-semibold uppercase tracking-wide text-white/40">
                     Flagship asset risk index
                   </p>
-                  <p className="mt-2 text-3xl font-bold tabular-nums text-white">
+                  <p className="relative mt-2 text-3xl font-bold tabular-nums text-white">
                     {rs.overall}
                     <span className="text-lg font-medium text-white/35">/100</span>
                   </p>
-                  <p className="mt-1 text-xs text-white/45">HSS · demo deep-dive available</p>
+                  <p className="relative mt-1 text-xs text-white/45">HSS · demo deep-dive available</p>
                 </div>
               </RevealItem>
               <RevealItem>
-                <div className="rounded-xl border border-white/[0.08] bg-[#0F172A] p-5 transition hover:border-white/[0.15] hover:bg-[#111e33]">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-white/40">
+                <div className="q-shadow-soft q-pressable group relative overflow-hidden rounded-xl border border-white/[0.08] bg-[#0F172A] p-5 transition-colors hover:border-white/[0.15] hover:bg-[#111e33]">
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-[#1A56DB]/0 blur-2xl transition-colors duration-500 group-hover:bg-[#1A56DB]/20"
+                  />
+                  <p className="relative text-[11px] font-semibold uppercase tracking-wide text-white/40">
                     Catalog events (50 km)
                   </p>
-                  <p className="mt-2 text-3xl font-bold text-[#1A56DB]">
+                  <p className="relative mt-2 text-3xl font-bold text-[#1A56DB]">
                     {fp.events_analyzed.toLocaleString()}
                   </p>
-                  <p className="mt-1 text-xs text-white/45">{fp.years_of_data} years of USGS records</p>
+                  <p className="relative mt-1 text-xs text-white/45">{fp.years_of_data} years of USGS records</p>
                 </div>
               </RevealItem>
               <RevealItem>
-                <div className="rounded-xl border border-white/[0.08] bg-[#0F172A] p-5 transition hover:border-white/[0.15] hover:bg-[#111e33]">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-white/40">
+                <div className="q-shadow-soft q-pressable group relative overflow-hidden rounded-xl border border-white/[0.08] bg-[#0F172A] p-5 transition-colors hover:border-white/[0.15] hover:bg-[#111e33]">
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-[#1A56DB]/0 blur-2xl transition-colors duration-500 group-hover:bg-[#1A56DB]/20"
+                  />
+                  <p className="relative text-[11px] font-semibold uppercase tracking-wide text-white/40">
                     Est. annual premium (HSS)
                   </p>
-                  <p className="mt-2 text-3xl font-bold tabular-nums text-white">
+                  <p className="relative mt-2 text-3xl font-bold tabular-nums text-white">
                     ${ins?.annual_premium.toLocaleString() ?? "—"}
                   </p>
-                  <p className="mt-1 text-xs text-white/45">{ins?.tier ?? "—"}</p>
+                  <p className="relative mt-1 text-xs text-white/45">{ins?.tier ?? "—"}</p>
                 </div>
               </RevealItem>
               <RevealItem>
-                <div className="rounded-xl border border-white/[0.08] bg-[#0F172A] p-5 transition hover:border-white/[0.15] hover:bg-[#111e33]">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-white/40">
+                <div className="q-shadow-soft q-pressable group relative overflow-hidden rounded-xl border border-white/[0.08] bg-[#0F172A] p-5 transition-colors hover:border-white/[0.15] hover:bg-[#111e33]">
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-[#1A56DB]/0 blur-2xl transition-colors duration-500 group-hover:bg-[#1A56DB]/20"
+                  />
+                  <p className="relative text-[11px] font-semibold uppercase tracking-wide text-white/40">
                     10-yr net position (model)
                   </p>
                   <p
-                    className={`mt-2 text-3xl font-bold tabular-nums ${
+                    className={`relative mt-2 text-3xl font-bold tabular-nums ${
                       y10 && y10.net_position >= 0 ? "text-emerald-300" : "text-red-300"
                     }`}
                   >
@@ -139,7 +155,7 @@ export default function EnterpriseRiskAssessmentPage() {
                       ? `$${y10.net_position.toLocaleString()}`
                       : "—"}
                   </p>
-                  <p className="mt-1 text-xs text-white/45">Cumulative premium − expected claims</p>
+                  <p className="relative mt-1 text-xs text-white/45">Cumulative premium − expected claims</p>
                 </div>
               </RevealItem>
             </RevealGroup>
@@ -147,7 +163,7 @@ export default function EnterpriseRiskAssessmentPage() {
             <Reveal index={1} className="mt-10 grid gap-4 md:grid-cols-3">
               <Link
                 href="/enterprise/dashboard"
-                className="group flex flex-col justify-between rounded-2xl border border-[#1A56DB]/35 bg-[#1A56DB]/10 p-6 transition hover:border-[#1A56DB]/55 hover:bg-[#1A56DB]/15"
+                className="q-shadow-accent q-pressable group flex flex-col justify-between rounded-2xl border border-[#1A56DB]/35 bg-[#1A56DB]/10 p-6 transition-colors hover:border-[#1A56DB]/55 hover:bg-[#1A56DB]/15"
               >
                 <div>
                   <div className="flex items-center gap-2 text-[#93c5fd]">
@@ -167,7 +183,7 @@ export default function EnterpriseRiskAssessmentPage() {
 
               <Link
                 href="/enterprise/building/hss"
-                className="group flex flex-col justify-between rounded-2xl border border-white/[0.1] bg-[#0F172A] p-6 transition hover:border-white/20 hover:bg-white/[0.04]"
+                className="q-shadow-soft q-pressable group flex flex-col justify-between rounded-2xl border border-white/[0.1] bg-[#0F172A] p-6 transition-colors hover:border-white/20 hover:bg-white/[0.04]"
               >
                 <div>
                   <div className="flex items-center gap-2 text-white">
@@ -187,7 +203,7 @@ export default function EnterpriseRiskAssessmentPage() {
 
               <Link
                 href="/risk/results"
-                className="group flex flex-col justify-between rounded-2xl border border-white/[0.1] bg-[#0F172A] p-6 transition hover:border-white/20 hover:bg-white/[0.04]"
+                className="q-shadow-soft q-pressable group flex flex-col justify-between rounded-2xl border border-white/[0.1] bg-[#0F172A] p-6 transition-colors hover:border-white/20 hover:bg-white/[0.04]"
               >
                 <div>
                   <span className="text-sm font-semibold text-white/90">

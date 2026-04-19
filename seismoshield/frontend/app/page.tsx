@@ -73,7 +73,7 @@ export default function HomePage() {
           planet. On Demo, the inner globe expands to `inset-0` and fills
           ONLY this card — the cross-fade then hands off to /map. */}
       <section className="relative mx-auto flex min-h-screen max-w-7xl items-center px-4 pt-24 pb-28 sm:px-6 sm:pt-28 md:px-12 md:pb-16 md:pt-32">
-        <div className="relative w-full min-h-[560px] overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#0b1224] via-[#080e1e] to-[#050814] px-5 py-10 shadow-[0_40px_120px_-40px_rgba(26,86,219,0.5)] sm:px-8 sm:py-14 md:px-16 md:py-20 md:min-h-[620px]">
+        <div className="q-shadow-lux relative w-full min-h-[560px] overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#0b1224] via-[#080e1e] to-[#050814] px-5 py-10 sm:px-8 sm:py-14 md:px-16 md:py-20 md:min-h-[620px]">
           {/* Tagline + Demo stack. Fades out as the globe takes over. */}
           <div
             className={`relative z-20 flex flex-col items-start justify-between gap-8 transition-opacity duration-700 md:flex-row md:items-center md:gap-12 ${

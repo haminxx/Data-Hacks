@@ -8,8 +8,14 @@ export default function EnterpriseIndexPage() {
   const router = useRouter();
 
   useEffect(() => {
+    // New flow (per product direction): the header Enterprise CTA
+    // always lands on the login page. Authed sessions skip straight
+    // to the risk-assessment console; unauthed visitors see the
+    // (pre-filled) login form.
     router.replace(
-      hasEnterpriseSession() ? "/enterprise/dashboard" : "/enterprise/login",
+      hasEnterpriseSession()
+        ? "/enterprise/risk-assessment"
+        : "/enterprise/login",
     );
   }, [router]);
 
