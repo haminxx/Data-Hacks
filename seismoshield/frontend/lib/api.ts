@@ -39,6 +39,8 @@ export interface HeatmapResponse {
 /** POST /insurance — vulnerability-adjusted risk and premium tier */
 export interface InsuranceResponse {
   pgv: number;
+  adjusted_pgv?: number;
+  vulnerability_multiplier?: number;
   tier: string;
   color: string;
   description: string;
