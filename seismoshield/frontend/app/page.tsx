@@ -1,6 +1,10 @@
-import { ArrowRight } from "lucide-react";
+"use client";
 
-import { Globe } from "@/components/Globe";
+import { ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+
+import { Globe, type GlobeHandle } from "@/components/Globe";
 
 const FEATURE_PILLS = [
   { emoji: "🌍", label: "Risk Assessment" },
@@ -9,6 +13,28 @@ const FEATURE_PILLS = [
 ];
 
 export default function HomePage() {
+  const router = useRouter();
+  const globeRef = useRef<GlobeHandle>(null);
+  const [flying, setFlying] = useState<boolean>(false);
+  const [fadeOut, setFadeOut] = useState<boolean>(false);
+
+  useEffect(() => {
+    router.prefetch("/map");
+  }, [router]);
+
+  const handleLaunchDemo = async () => {
+    if (flying) return;
+    setFlying(true);
+    try {
+      await globeRef.current?.flyToSanDiego();
+    } finally {
+      setFadeOut(true);
+      window.setTimeout(() => {
+        router.push("/map");
+      }, 650);
+    }
+  };
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#0F172A] text-white">
       <div
@@ -20,8 +46,16 @@ export default function HomePage() {
         className="pointer-events-none absolute inset-x-0 top-0 h-[320px] bg-[radial-gradient(ellipse_at_top,rgba(26,86,219,0.25)_0%,rgba(15,23,42,0)_70%)]"
       />
 
-      <section className="relative mx-auto flex min-h-screen max-w-7xl flex-col-reverse items-center justify-between gap-12 px-6 py-16 md:flex-row md:px-12 md:py-24">
-        <div className="z-10 max-w-xl text-left">
+      <section
+        className={`relative mx-auto flex min-h-screen max-w-7xl flex-col-reverse items-center justify-between gap-12 px-6 py-16 transition-opacity duration-500 md:flex-row md:px-12 md:py-24 ${
+          flying ? "opacity-[0.92]" : ""
+        }`}
+      >
+        <div
+          className={`z-10 max-w-xl text-left transition-all duration-700 ${
+            flying ? "-translate-x-6 opacity-0" : ""
+          }`}
+        >
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/70 backdrop-blur">
             <span className="relative inline-flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#1A56DB]/70" />
@@ -42,13 +76,16 @@ export default function HomePage() {
             Oceanography data.
           </p>
 
-          {/* TODO: wire onClick to globe flyTo + route transition to the 2.5D SanGIS map once it's ready */}
           <button
             type="button"
-            className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#1A56DB] px-7 py-3 text-base font-semibold text-white shadow-lg shadow-[#1A56DB]/25 transition hover:bg-[#1647b3] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1A56DB]"
+            onClick={handleLaunchDemo}
+            disabled={flying}
+            className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#1A56DB] px-7 py-3 text-base font-semibold text-white shadow-lg shadow-[#1A56DB]/25 transition hover:bg-[#1647b3] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1A56DB] disabled:cursor-not-allowed disabled:opacity-70"
           >
-            Launch Demo
-            <ArrowRight className="h-4 w-4" />
+            {flying ? "Flying to San Diego…" : "Launch Demo"}
+            <ArrowRight
+              className={`h-4 w-4 transition-transform ${flying ? "translate-x-1" : ""}`}
+            />
           </button>
 
           <div className="mt-8 flex flex-wrap gap-2">
@@ -65,7 +102,10 @@ export default function HomePage() {
         </div>
 
         <div className="relative h-[320px] w-full max-w-xl md:h-[520px]">
-          <Globe className="absolute -bottom-24 -right-24 scale-125 md:-bottom-32 md:-right-40 md:scale-150" />
+          <Globe
+            ref={globeRef}
+            className="absolute -bottom-24 -right-24 scale-125 md:-bottom-32 md:-right-40 md:scale-150"
+          />
         </div>
       </section>
 
@@ -74,6 +114,14 @@ export default function HomePage() {
           DataHacks @ UCSD · SeismoShield
         </p>
       </div>
+
+      {/* Cross-fade overlay: fades to navy as we route to /map so the transition feels seamless */}
+      <div
+        aria-hidden
+        className={`pointer-events-none fixed inset-0 z-40 bg-[#0F172A] transition-opacity duration-700 ${
+          fadeOut ? "opacity-100" : "opacity-0"
+        }`}
+      />
     </main>
   );
 }

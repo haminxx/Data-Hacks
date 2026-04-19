@@ -1,7 +1,18 @@
 "use client";
 
 import createGlobe, { type COBEOptions } from "cobe";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+} from "react";
+
+export type GlobeHandle = {
+  flyToSanDiego: () => Promise<void>;
+  reset: () => void;
+};
 
 const GLOBE_CONFIG: COBEOptions = {
   width: 800,
@@ -31,54 +42,115 @@ const GLOBE_CONFIG: COBEOptions = {
   ],
 };
 
+const AUTO_PHI_SPEED = 0.0018;
+const SAN_DIEGO_LAT = 32.7157;
+const SAN_DIEGO_LON = -117.1611;
+
 interface GlobeProps {
   className?: string;
   config?: COBEOptions;
+  onFlyComplete?: () => void;
 }
 
-export function Globe({ className, config = GLOBE_CONFIG }: GlobeProps) {
+function easeInOutCubic(t: number): number {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+/**
+ * Normalise an angle delta into the [-PI, PI] range so that a flyTo
+ * animation always rotates along the shortest arc.
+ */
+function shortestDelta(from: number, to: number): number {
+  let d = (to - from) % (Math.PI * 2);
+  if (d > Math.PI) d -= Math.PI * 2;
+  if (d < -Math.PI) d += Math.PI * 2;
+  return d;
+}
+
+export const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
+  { className, config = GLOBE_CONFIG, onFlyComplete },
+  ref,
+) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
   const phiRef = useRef<number>(0);
+  const thetaRef = useRef<number>(config.theta ?? 0.28);
   const widthRef = useRef<number>(0);
-  const pointerInteracting = useRef<number | null>(null);
-  const pointerInteractionMovement = useRef<number>(0);
-  const [r, setR] = useState<number>(0);
 
-  const updatePointerInteraction = (value: number | null) => {
-    pointerInteracting.current = value;
-    if (canvasRef.current) {
-      canvasRef.current.style.cursor = value !== null ? "grabbing" : "grab";
-    }
+  const pointerStartX = useRef<number | null>(null);
+  const lastPointerX = useRef<number | null>(null);
+  const dragVelocity = useRef<number>(0);
+  const isDragging = useRef<boolean>(false);
+  const dragOffset = useRef<number>(0);
+
+  const autoPausedRef = useRef<boolean>(false);
+  const flyingRef = useRef<boolean>(false);
+  const onFlyCompleteRef = useRef<typeof onFlyComplete>(onFlyComplete);
+  onFlyCompleteRef.current = onFlyComplete;
+
+  const setCursor = (cursor: "grab" | "grabbing") => {
+    if (canvasRef.current) canvasRef.current.style.cursor = cursor;
   };
 
-  const updateMovement = (clientX: number) => {
-    if (pointerInteracting.current !== null) {
-      const delta = clientX - pointerInteracting.current;
-      pointerInteractionMovement.current = delta;
-      setR(delta / 220);
-    }
+  const onPointerDown = (clientX: number) => {
+    isDragging.current = true;
+    pointerStartX.current = clientX;
+    lastPointerX.current = clientX;
+    dragVelocity.current = 0;
+    dragOffset.current = 0;
+    autoPausedRef.current = true;
+    setCursor("grabbing");
   };
 
-  const onRender = useCallback(
-    (state: Record<string, number>) => {
-      if (pointerInteracting.current === null) {
-        phiRef.current += 0.0018;
+  const onPointerMove = (clientX: number) => {
+    if (!isDragging.current || lastPointerX.current === null) return;
+    const instantDelta = clientX - lastPointerX.current;
+    lastPointerX.current = clientX;
+    dragVelocity.current = instantDelta;
+    dragOffset.current += instantDelta / 220;
+  };
+
+  const onPointerUp = () => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    pointerStartX.current = null;
+    lastPointerX.current = null;
+    setCursor("grab");
+  };
+
+  const onRender = useCallback((state: Record<string, number>) => {
+    if (flyingRef.current) {
+      state.phi = phiRef.current;
+      state.theta = thetaRef.current;
+    } else {
+      if (isDragging.current) {
+        phiRef.current += dragOffset.current * 0.12;
+        dragOffset.current *= 0.88;
+      } else if (autoPausedRef.current) {
+        if (Math.abs(dragVelocity.current) > 0.02) {
+          phiRef.current += (dragVelocity.current / 220) * 0.12;
+          dragVelocity.current *= 0.94;
+        } else {
+          dragVelocity.current = 0;
+          autoPausedRef.current = false;
+        }
+      } else {
+        phiRef.current += AUTO_PHI_SPEED;
       }
-      state.phi = phiRef.current + r;
-      state.width = widthRef.current * 2;
-      state.height = widthRef.current * 2;
-    },
-    [r],
-  );
+      state.phi = phiRef.current;
+      state.theta = thetaRef.current;
+    }
+    state.width = widthRef.current * 2;
+    state.height = widthRef.current * 2;
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const onResize = () => {
-      if (canvas) {
-        widthRef.current = canvas.offsetWidth;
-      }
+      if (canvas) widthRef.current = canvas.offsetWidth;
     };
 
     window.addEventListener("resize", onResize);
@@ -102,27 +174,94 @@ export function Globe({ className, config = GLOBE_CONFIG }: GlobeProps) {
     };
   }, [config, onRender]);
 
+  useImperativeHandle(
+    ref,
+    () => ({
+      flyToSanDiego: () =>
+        new Promise<void>((resolve) => {
+          if (flyingRef.current) {
+            resolve();
+            return;
+          }
+          flyingRef.current = true;
+          autoPausedRef.current = true;
+
+          const startPhi = phiRef.current;
+          const startTheta = thetaRef.current;
+
+          const targetPhi =
+            phiRef.current + shortestDelta(
+              phiRef.current % (Math.PI * 2),
+              -((SAN_DIEGO_LON * Math.PI) / 180),
+            );
+          const targetTheta = (SAN_DIEGO_LAT * Math.PI) / 180;
+
+          const el = containerRef.current;
+          if (el) {
+            el.style.transition =
+              "transform 2200ms cubic-bezier(0.65, 0, 0.35, 1), filter 2200ms cubic-bezier(0.65, 0, 0.35, 1)";
+            el.style.transform = "scale(2.4)";
+            el.style.filter = "brightness(1.15) saturate(1.1)";
+          }
+
+          const start = performance.now();
+          const duration = 2200;
+          const step = (now: number) => {
+            const t = Math.min(1, (now - start) / duration);
+            const e = easeInOutCubic(t);
+            phiRef.current = startPhi + (targetPhi - startPhi) * e;
+            thetaRef.current = startTheta + (targetTheta - startTheta) * e;
+            if (t < 1) {
+              requestAnimationFrame(step);
+            } else {
+              flyingRef.current = false;
+              onFlyCompleteRef.current?.();
+              resolve();
+            }
+          };
+          requestAnimationFrame(step);
+        }),
+      reset: () => {
+        const el = containerRef.current;
+        if (el) {
+          el.style.transition =
+            "transform 900ms ease, filter 900ms ease";
+          el.style.transform = "";
+          el.style.filter = "";
+        }
+        flyingRef.current = false;
+        autoPausedRef.current = false;
+        dragVelocity.current = 0;
+        dragOffset.current = 0;
+      },
+    }),
+    [],
+  );
+
   return (
     <div
-      className={`absolute inset-0 mx-auto aspect-square w-full max-w-[640px] ${className ?? ""}`}
+      ref={containerRef}
+      className={`absolute inset-0 mx-auto aspect-square w-full max-w-[640px] transition-transform duration-700 ease-out ${className ?? ""}`}
     >
       <canvas
         ref={canvasRef}
         className="size-full cursor-grab opacity-0 transition-opacity duration-700 [contain:layout_paint_size]"
-        onPointerDown={(e) =>
-          updatePointerInteraction(
-            e.clientX - pointerInteractionMovement.current,
-          )
-        }
-        onPointerUp={() => updatePointerInteraction(null)}
-        onPointerOut={() => updatePointerInteraction(null)}
-        onMouseMove={(e) => updateMovement(e.clientX)}
+        onPointerDown={(e) => {
+          (e.currentTarget as HTMLCanvasElement).setPointerCapture(
+            e.pointerId,
+          );
+          onPointerDown(e.clientX);
+        }}
+        onPointerMove={(e) => onPointerMove(e.clientX)}
+        onPointerUp={() => onPointerUp()}
+        onPointerCancel={() => onPointerUp()}
+        onPointerLeave={() => onPointerUp()}
         onTouchMove={(e) => {
-          if (e.touches[0]) updateMovement(e.touches[0].clientX);
+          if (e.touches[0]) onPointerMove(e.touches[0].clientX);
         }}
       />
     </div>
   );
-}
+});
 
 export default Globe;
