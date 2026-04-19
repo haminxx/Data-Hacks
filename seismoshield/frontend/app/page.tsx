@@ -51,6 +51,18 @@ export default function HomePage() {
             🚨 Emergency Guidance
           </span>
         </div>
+
+        <nav
+          className="relative z-10 mt-12 flex flex-wrap justify-center gap-6 text-xs text-white/45"
+          aria-label="Quick links"
+        >
+          <Link href="/simulator" className="hover:text-white/80">
+            Simulator
+          </Link>
+          <Link href="/emergency" className="hover:text-white/80">
+            Emergency
+          </Link>
+        </nav>
       </div>
     </main>
   );

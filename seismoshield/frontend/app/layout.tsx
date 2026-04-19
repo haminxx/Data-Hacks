@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
+
+import { EmergencyModal } from "@/components/EmergencyModal";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -26,6 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={GeistSans.className}>
       <body className="min-h-screen bg-[#0F172A] text-white antialiased">
+        <EmergencyModal />
         {children}
       </body>
     </html>

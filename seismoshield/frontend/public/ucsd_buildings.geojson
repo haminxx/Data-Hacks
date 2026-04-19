@@ -1,0 +1,53 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "UCSD Recreation Center" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-117.2372, 32.878],
+            [-117.2356, 32.878],
+            [-117.2356, 32.8792],
+            [-117.2372, 32.8792],
+            [-117.2372, 32.878]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "RIMAC Arena (nearby)" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-117.2395, 32.885],
+            [-117.2375, 32.885],
+            [-117.2375, 32.8862],
+            [-117.2395, 32.8862],
+            [-117.2395, 32.885]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Main Gym Annex" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-117.2348, 32.8775],
+            [-117.2335, 32.8775],
+            [-117.2335, 32.8783],
+            [-117.2348, 32.8783],
+            [-117.2348, 32.8775]
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
@@ -14,6 +15,18 @@ import {
 const BUILDING_NAME = "UCSD Recreation Center";
 const ADDRESS = "9500 Gilman Dr, La Jolla, CA 92093";
 const STREET_VIEW_LOC = "32.8786,-117.2364";
+
+const SeismoMap = dynamic(() => import("@/components/SeismoMap"), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="flex h-[min(70vh,560px)] w-full items-center justify-center rounded-xl border border-white/10 bg-[#0b1224] text-sm text-white/50"
+      aria-hidden
+    >
+      Loading map…
+    </div>
+  ),
+});
 
 function RiskCardSkeleton() {
   return (
@@ -50,6 +63,7 @@ export default function ExteriorPage() {
   const [insurance, setInsurance] = useState<InsuranceResponse | null>(null);
   const [insuranceError, setInsuranceError] = useState<string | null>(null);
   const [insuranceLoading, setInsuranceLoading] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -193,6 +207,22 @@ export default function ExteriorPage() {
           </p>
         </div>
       </div>
+
+      <section className="mx-auto mt-10 max-w-6xl border-t border-white/10 pt-8">
+        <button
+          type="button"
+          onClick={() => setMapOpen((o) => !o)}
+          className="flex w-full items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-left text-sm font-medium text-white transition hover:bg-white/10"
+        >
+          <span>View 2.5D Building &amp; Seismic Map</span>
+          <span className="text-white/60">{mapOpen ? "−" : "+"}</span>
+        </button>
+        {mapOpen && (
+          <div className="mt-4">
+            <SeismoMap active={mapOpen} />
+          </div>
+        )}
+      </section>
 
       {insuranceOpen && (
         <div
