@@ -44,22 +44,27 @@ export default function EnterpriseLoginPage() {
       />
 
       <div className="relative z-10 w-full max-w-md">
-        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/70 backdrop-blur">
+        <div className="q-blur-reveal mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/70 backdrop-blur">
           <Building2 className="h-3.5 w-3.5 text-[#93c5fd]" />
           Enterprise portal
         </div>
 
-        <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+        <h1 className="q-blur-reveal q-blur-reveal-delay-1 text-3xl font-semibold tracking-tight md:text-4xl">
           Sign in to Quarte
         </h1>
-        <p className="mt-2 text-sm leading-relaxed text-white/60">
+        <div
+          aria-hidden
+          className="q-rule mt-3 h-px w-32 bg-gradient-to-r from-transparent via-white/25 to-transparent"
+          style={{ animationDelay: "0.6s" }}
+        />
+        <p className="q-blur-reveal q-blur-reveal-delay-2 mt-2 text-sm leading-relaxed text-white/60">
           Access the enterprise risk assessment console. Use your corporate
           email; SSO is not required for the demo.
         </p>
 
         <form
           onSubmit={handleSubmit}
-          className="mt-8 space-y-4 rounded-2xl border border-white/10 bg-[#0b1224]/80 p-6 backdrop-blur"
+          className="q-blur-reveal q-blur-reveal-delay-3 mt-8 space-y-4 rounded-2xl border border-white/10 bg-[#0b1224]/80 p-6 backdrop-blur"
         >
           <div>
             <label

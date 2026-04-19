@@ -54,17 +54,22 @@ export default function RiskAddressPage() {
       />
 
       <div className="relative flex flex-1 flex-col items-center justify-center px-4 pb-20 pt-8 md:pt-12">
-        <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#1A56DB]/25 bg-[#1A56DB]/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.12em] text-[#93c5fd]">
+        <div className="q-blur-reveal mb-2 inline-flex items-center gap-2 rounded-full border border-[#1A56DB]/25 bg-[#1A56DB]/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.12em] text-[#93c5fd]">
           <Sparkles className="h-3 w-3" aria-hidden />
           Property intelligence
         </div>
 
-        <h1 className="text-center text-3xl font-semibold tracking-tight md:text-[2.25rem] md:leading-tight">
+        <h1 className="q-blur-reveal q-blur-reveal-delay-1 text-center text-3xl font-semibold tracking-tight md:text-[2.25rem] md:leading-tight">
           <span className="bg-gradient-to-b from-white to-white/80 bg-clip-text text-transparent">
             Risk assessment
           </span>
         </h1>
-        <p className="mt-3 max-w-md text-center text-sm leading-relaxed text-white/55 md:text-[15px]">
+        <div
+          aria-hidden
+          className="q-rule mx-auto mt-3 h-px w-32 bg-gradient-to-r from-transparent via-white/25 to-transparent"
+          style={{ animationDelay: "0.55s" }}
+        />
+        <p className="q-blur-reveal q-blur-reveal-delay-2 mt-3 max-w-md text-center text-sm leading-relaxed text-white/55 md:text-[15px]">
           Enter a Southern California address. For this demo, use keywords like{" "}
           <span className="text-white/75">HSS</span>,{" "}
           <span className="text-white/75">UCSD</span>, or{" "}
@@ -72,7 +77,7 @@ export default function RiskAddressPage() {
           report.
         </p>
 
-        <div className="mt-3 flex flex-wrap justify-center gap-2">
+        <div className="q-blur-reveal q-blur-reveal-delay-3 mt-3 flex flex-wrap justify-center gap-2">
           {["HSS", "UCSD", "1345"].map((chip) => (
             <button
               key={chip}
@@ -92,7 +97,7 @@ export default function RiskAddressPage() {
           ))}
         </div>
 
-        <div className="mt-10 w-full max-w-xl">
+        <div className="q-blur-reveal q-blur-reveal-delay-4 mt-10 w-full max-w-xl">
           <div className="rounded-2xl border border-white/[0.09] bg-[#0b1224]/80 p-1 shadow-[0_24px_80px_-24px_rgba(0,0,0,0.65)] backdrop-blur-md">
             <div className="rounded-[14px] border border-white/[0.06] bg-gradient-to-b from-white/[0.05] to-transparent p-5 md:p-6">
               <label

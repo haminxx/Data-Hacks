@@ -363,7 +363,11 @@
  * so the motion reads as rotate → glide → zoom → hand-off.
  */
 .hero-globe {
-  width: min(108%, 560px);
+  /* Mobile parked size — slightly narrower than before so the
+     flying scale can fit fully inside the card on phones
+     without being cropped by overflow-hidden. The globe still
+     reads just under the Demo button. */
+  width: min(96%, 480px);
   transform-origin: center center;
   will-change: transform;
   transform: translate(0%, 26%) scale(1);
@@ -371,7 +375,11 @@
 }
 
 .hero-globe[data-flying="true"] {
-  transform: translate(0%, 0%) scale(1.65);
+  /* Lands at EXACT (0, 0) translate — i.e. the flex-centre of
+     the card both horizontally and vertically — then zooms to
+     1.4x so the sphere fills the card without spilling past its
+     rounded edge on narrow screens. */
+  transform: translate(0%, 0%) scale(1.4);
   /* Delay matches STAGE_1_MS in app/page.tsx — keeps CSS and JS
      beats in lock-step without needing a runtime style update. */
   transition-delay: 1400ms;
@@ -383,6 +391,8 @@
     transform: translate(40%, 12%) scale(1);
   }
   .hero-globe[data-flying="true"] {
+    /* Desktop card is wider so we can push to a slightly
+       punchier 1.55x without clipping. */
     transform: translate(0%, 0%) scale(1.55);
   }
 }
@@ -531,16 +541,73 @@
 }
 
 .q-fade-up {
-  animation: q-fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: q-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .q-fade-up-delay-1 {
-  animation-delay: 0.08s;
+  animation-delay: 0.12s;
 }
 .q-fade-up-delay-2 {
-  animation-delay: 0.18s;
+  animation-delay: 0.28s;
 }
 .q-fade-up-delay-3 {
-  animation-delay: 0.3s;
+  animation-delay: 0.46s;
+}
+.q-fade-up-delay-4 {
+  animation-delay: 0.66s;
+}
+.q-fade-up-delay-5 {
+  animation-delay: 0.88s;
+}
+
+/* Slower cinematic variant for hero copy. Matches the rhythm of
+   the reference animation-style (~1.1s with a soft cubic-bezier)
+   while keeping transform-only motion. */
+@keyframes q-blur-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+    filter: blur(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+.q-blur-reveal {
+  animation: q-blur-reveal 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.q-blur-reveal-delay-1 {
+  animation-delay: 0.18s;
+}
+.q-blur-reveal-delay-2 {
+  animation-delay: 0.42s;
+}
+.q-blur-reveal-delay-3 {
+  animation-delay: 0.7s;
+}
+.q-blur-reveal-delay-4 {
+  animation-delay: 0.98s;
+}
+.q-blur-reveal-delay-5 {
+  animation-delay: 1.26s;
+}
+
+/* Hairline divider that draws itself left→right — paired with the
+   big headlines on the reference pricing page. Pure CSS so no
+   Framer Motion overhead when used sparingly. */
+@keyframes q-rule-draw {
+  from {
+    width: 0;
+    opacity: 0;
+  }
+  to {
+    width: 100%;
+    opacity: 1;
+  }
+}
+.q-rule {
+  animation: q-rule-draw 1s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .q-pressable {
@@ -575,6 +642,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .q-fade-up,
+  .q-blur-reveal,
+  .q-rule,
   .q-bloom,
   .q-shimmer::after,
   .q-aura::before,

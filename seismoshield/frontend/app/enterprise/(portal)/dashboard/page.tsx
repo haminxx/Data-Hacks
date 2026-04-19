@@ -1,6 +1,7 @@
 "use client";
 
 import { EnterpriseHeader } from "@/components/enterprise/EnterpriseHeader";
+import { Reveal, RevealGroup, RevealItem } from "@/components/ui/Reveal";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -63,41 +64,46 @@ export default function EnterpriseDashboardPage() {
       <EnterpriseHeader center={<span>Portfolio Overview</span>} />
 
       <div className="mx-auto max-w-7xl px-4 py-8 md:px-8">
-        <div className="mb-6 flex flex-wrap items-center justify-end gap-3">
+        <Reveal className="mb-6 flex flex-wrap items-center justify-end gap-3">
           <Link
             href="/enterprise/risk-assessment"
             className="text-sm font-medium text-[#1A56DB] hover:text-[#93c5fd]"
           >
             Enterprise risk overview →
           </Link>
-        </div>
+        </Reveal>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <RevealGroup
+          step={0.11}
+          delayChildren={0.05}
+          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        >
           {[
             { label: "Total Properties", value: "4", icon: "🏢", color: "text-[#1A56DB]" },
             { label: "High/Severe Risk", value: "3", icon: "⚠️", color: "text-red-400" },
             { label: "Portfolio Value", value: "$48M", icon: "💰", color: "text-slate-300" },
             { label: "Annual Claims Exposure", value: "$2.1M", icon: "📊", color: "text-orange-300" },
           ].map((c) => (
-            <div
-              key={c.label}
-              className="rounded-xl border border-white/[0.08] bg-[#0F172A] p-4"
-            >
-              <span className="text-2xl">{c.icon}</span>
-              <p className={`mt-2 text-2xl font-bold ${c.color}`}>{c.value}</p>
-              <p className="mt-1 text-xs text-white/45">{c.label}</p>
-            </div>
+            <RevealItem key={c.label}>
+              <div className="rounded-xl border border-white/[0.08] bg-[#0F172A] p-4 transition hover:border-white/[0.15] hover:bg-[#111e33]">
+                <span className="text-2xl">{c.icon}</span>
+                <p className={`mt-2 text-2xl font-bold ${c.color}`}>{c.value}</p>
+                <p className="mt-1 text-xs text-white/45">{c.label}</p>
+              </div>
+            </RevealItem>
           ))}
-        </div>
+        </RevealGroup>
 
-        <h2 className="mt-10 text-lg font-semibold text-white">Insured Properties</h2>
-        <input
-          type="search"
-          placeholder="Search properties..."
-          className="mt-3 w-full max-w-md rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white placeholder:text-white/35"
-        />
+        <Reveal index={1}>
+          <h2 className="mt-10 text-lg font-semibold text-white">Insured Properties</h2>
+          <input
+            type="search"
+            placeholder="Search properties..."
+            className="mt-3 w-full max-w-md rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white placeholder:text-white/35"
+          />
+        </Reveal>
 
-        <div className="mt-6 overflow-x-auto rounded-xl border border-white/[0.08]">
+        <Reveal index={2} className="mt-6 overflow-x-auto rounded-xl border border-white/[0.08]">
           <table className="w-full min-w-[800px] text-left text-sm">
             <thead className="border-b border-white/[0.08] bg-white/[0.04] text-[11px] uppercase tracking-wide text-white/45">
               <tr>
@@ -171,7 +177,7 @@ export default function EnterpriseDashboardPage() {
               ))}
             </tbody>
           </table>
-        </div>
+        </Reveal>
       </div>
     </div>
   );

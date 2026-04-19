@@ -46,17 +46,18 @@ export default function QuestionCard({
 
   return (
     <aside
-      className="fixed z-30 overflow-y-auto text-white md:right-4 md:top-20 md:bottom-4 md:w-[340px] md:max-h-[calc(100vh-96px)] right-2 left-2 bottom-2 w-auto max-h-[60vh] md:left-auto md:bottom-auto"
+      className="fixed z-30 overflow-y-auto text-white md:right-4 md:top-20 md:bottom-4 md:w-[340px] md:max-h-[calc(100vh-96px)] md:p-6 right-2 left-2 bottom-2 w-auto max-h-[56vh] p-3.5 md:left-auto md:bottom-auto"
       style={{
         background: "rgba(10,15,30,0.92)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
         border: "1px solid rgba(255,255,255,0.08)",
-        borderRadius: 20,
-        padding: 24,
+        borderRadius: 18,
       }}
     >
-      <div className="flex justify-center">
+      {/* Mobile shrinks the survival pie so it doesn't dominate the
+          sheet. Desktop keeps the 140px proportion from the mock. */}
+      <div className="flex justify-center [&>div>div]:h-[96px] [&>div>div]:w-[96px] md:[&>div>div]:h-[140px] md:[&>div>div]:w-[140px]">
         <SurvivalPieChart
           survivalRate={survivalRate}
           isAnimating={isAnimating}
@@ -64,7 +65,7 @@ export default function QuestionCard({
         />
       </div>
 
-      <div className="my-4 border-t border-white/10" />
+      <div className="my-3 border-t border-white/10 md:my-4" />
 
       <div className="mb-3 flex flex-wrap items-center gap-1.5 text-xs">
         <span>🧭</span>
@@ -97,13 +98,13 @@ export default function QuestionCard({
       </div>
 
       <p
-        className="mb-4 text-[15px] font-medium text-white"
-        style={{ lineHeight: 1.6 }}
+        className="mb-3 text-[13px] font-medium text-white md:mb-4 md:text-[15px]"
+        style={{ lineHeight: 1.55 }}
       >
         {question.text}
       </p>
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1.5 md:gap-2">
         {question.options.map((option, index) => {
           const correct = answered && index === question.correctIndex;
           const wrongPicked =
@@ -128,15 +129,12 @@ export default function QuestionCard({
               type="button"
               disabled={answered}
               onClick={() => onAnswer(index)}
-              className={`group w-full rounded-[12px] text-left transition-all duration-200 ${
+              className={`group w-full rounded-[12px] px-3 py-2.5 text-left transition-all duration-200 md:px-4 md:py-[14px] ${
                 answered
                   ? "cursor-not-allowed"
                   : "cursor-pointer hover:!bg-slate-700/80"
               }`}
-              style={{
-                ...baseStyle,
-                padding: "14px 16px",
-              }}
+              style={baseStyle}
             >
               <div
                 className="flex items-start gap-2 text-[14px]"

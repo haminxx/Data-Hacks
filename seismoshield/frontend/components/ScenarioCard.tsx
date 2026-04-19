@@ -1,5 +1,7 @@
 "use client";
 
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { useState } from "react";
 import type {
   BuildingHazard,
   DirectionZone,
@@ -53,27 +55,59 @@ export default function ScenarioCard({
   answeredZones,
   buildingHazards,
 }: ScenarioCardProps) {
+  // Phones: default collapsed so the 360° view has breathing room.
+  // Desktop: always expanded — the sidebar has room for the full rail.
+  const [collapsed, setCollapsed] = useState(true);
+
   return (
     <aside
-      className="fixed z-30 overflow-y-auto text-white scrollbar-hide md:left-4 md:top-20 md:bottom-4 md:w-[280px] left-2 right-2 bottom-2 max-h-[32vh] md:max-h-none"
+      className={`fixed z-30 overflow-y-auto text-white scrollbar-hide md:left-4 md:top-20 md:bottom-4 md:w-[280px] md:max-h-none md:p-5 ${
+        collapsed
+          ? "left-2 top-2 w-[min(58vw,220px)] max-h-[60vh] p-2.5"
+          : "left-2 right-2 top-2 max-h-[62vh] p-3"
+      }`}
       style={{
         background: "rgba(10,15,30,0.92)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
         border: "1px solid rgba(255,255,255,0.08)",
-        borderRadius: 20,
-        padding: 20,
+        borderRadius: 16,
         scrollbarWidth: "none",
       }}
     >
+      {/* Mobile-only collapse toggle. Tap the header area to fold the
+          whole scenario rail down to a single-row pill showing the
+          magnitude so the 360° panorama stays the hero of the view. */}
+      <button
+        type="button"
+        onClick={() => setCollapsed((v) => !v)}
+        className="mb-2 flex w-full items-center justify-between gap-2 rounded-lg px-1 py-0.5 text-left text-[11px] uppercase tracking-[0.18em] text-slate-400 transition hover:text-white md:hidden"
+        aria-expanded={!collapsed}
+      >
+        <span className="flex items-center gap-2">
+          <span className="font-semibold text-[#93c5fd]">
+            M {magnitude.toFixed(1)}
+          </span>
+          <span className="text-slate-500">· Scenario</span>
+        </span>
+        {collapsed ? (
+          <ChevronDown className="h-3.5 w-3.5" />
+        ) : (
+          <ChevronUp className="h-3.5 w-3.5" />
+        )}
+      </button>
+
+      {/* On mobile, when collapsed, hide everything below — the card
+          becomes a tiny floating magnitude chip. `hidden md:block`
+          keeps it visible on desktop regardless of state. */}
+      <div className={collapsed ? "hidden md:block" : "block"}>
       <section>
         <SectionTitle>Scenario Settings</SectionTitle>
         <div className="mb-3">
-          <p className="text-xs text-slate-500">MAGNITUDE</p>
-          <p
-            className="leading-none"
-            style={{ color: "#1A56DB", fontSize: 32, fontWeight: 900 }}
-          >
+          <p className="text-[10px] uppercase tracking-wider text-slate-500 md:text-xs">
+            Magnitude
+          </p>
+          <p className="text-[26px] font-black leading-none text-[#1A56DB] md:text-[32px]">
             {magnitude.toFixed(1)}
           </p>
         </div>
@@ -220,6 +254,7 @@ export default function ScenarioCard({
           })}
         </div>
       </section>
+      </div>
     </aside>
   );
 }

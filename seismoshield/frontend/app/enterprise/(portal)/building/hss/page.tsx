@@ -150,17 +150,22 @@ export default function EnterpriseHSSPage() {
       <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
         <Link
           href="/enterprise/dashboard"
-          className="mb-6 inline-flex text-sm text-white/60 hover:text-white"
+          className="q-blur-reveal mb-6 inline-flex text-sm text-white/60 hover:text-white"
         >
           ← Back to Portfolio
         </Link>
 
         <div className="grid gap-8 lg:grid-cols-2">
-          <div className="rounded-2xl border border-white/[0.08] bg-[#0F172A] p-6">
+          <div className="q-blur-reveal q-blur-reveal-delay-1 rounded-2xl border border-white/[0.08] bg-[#0F172A] p-6">
             <h1 className="text-2xl font-bold">HSS Building — Room 1345</h1>
             <p className="mt-1 text-white/70">
               Muir College, UC San Diego, La Jolla CA 92093
             </p>
+            <div
+              aria-hidden
+              className="q-rule mt-3 h-px w-32 bg-gradient-to-r from-transparent via-white/25 to-transparent"
+              style={{ animationDelay: "0.5s" }}
+            />
             <p className="mt-2 text-sm text-white/50">
               8-story Brutalist Concrete Structure — Built 1970
             </p>

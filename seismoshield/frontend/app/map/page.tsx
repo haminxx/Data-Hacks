@@ -195,17 +195,29 @@ export default function MapPage() {
         </div>
       </div>
 
-      {/* Back-to-globe pill. Always visible in idle / flying. Hidden during
-          the full-screen pano because the Street View close button sits in
-          the same quadrant. */}
+      {/* Back-to-globe pill. Always visible on phone (44px tap target,
+          safe-area-aware bottom offset so it clears iOS home indicator),
+          and gracefully collapses to just the chevron icon on very
+          narrow screens so it never crowds the map. Hidden only during
+          the full-screen pano because the Street View close button
+          sits in the same quadrant. */}
       <Link
         href="/"
-        className={`group absolute left-4 bottom-6 z-20 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/60 px-4 py-2 text-sm font-medium text-white backdrop-blur transition hover:bg-black/80 ${
-          isStreet ? "pointer-events-none opacity-0" : "opacity-100"
+        aria-label="Back to globe"
+        className={`group absolute z-20 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/70 px-4 py-2.5 text-[13px] font-medium text-white shadow-[0_14px_40px_-12px_rgba(0,0,0,0.65)] backdrop-blur-md transition-all duration-300 hover:bg-black/85 active:scale-95 sm:bottom-6 sm:left-4 sm:text-sm ${
+          isStreet
+            ? "pointer-events-none translate-y-2 opacity-0"
+            : "translate-y-0 opacity-100"
         }`}
+        style={{
+          left: "max(0.75rem, env(safe-area-inset-left))",
+          bottom:
+            "max(1rem, calc(env(safe-area-inset-bottom) + 0.5rem))",
+          minHeight: 44,
+        }}
       >
-        <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-        Back to Globe
+        <ArrowLeft className="h-4 w-4 shrink-0 transition-transform group-hover:-translate-x-0.5" />
+        <span className="whitespace-nowrap">Back to Globe</span>
       </Link>
 
       {/* During the cinematic fly-in, surface a slim status chip so the user

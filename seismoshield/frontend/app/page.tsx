@@ -81,7 +81,7 @@ export default function HomePage() {
             }`}
           >
             <div className="relative z-10 w-full max-w-xl md:flex-1">
-              <div className="q-fade-up mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/70 backdrop-blur">
+              <div className="q-blur-reveal mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/70 backdrop-blur">
                 <span className="relative inline-flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#1A56DB]/70" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-[#1A56DB]" />
@@ -89,7 +89,7 @@ export default function HomePage() {
                 Real-time seismic intelligence
               </div>
 
-              <h1 className="q-fade-up q-fade-up-delay-1 text-[28px] font-normal leading-[1.35] tracking-tight md:text-[32px]">
+              <h1 className="q-blur-reveal q-blur-reveal-delay-2 text-[28px] font-normal leading-[1.35] tracking-tight md:text-[32px]">
                 <span className="q-gradient-text font-semibold">Quarte</span>{" "}
                 <span className="text-white/60">
                   bridges disaster preparedness and insurance tech by using
@@ -99,12 +99,20 @@ export default function HomePage() {
                 </span>
               </h1>
 
+              {/* Hairline that draws itself under the headline — a small
+                  hat-tip to the reference marketing-page vocabulary. */}
+              <div
+                aria-hidden
+                className="q-rule q-blur-reveal-delay-3 mt-5 h-px w-40 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                style={{ animationDelay: "0.7s" }}
+              />
+
               <button
                 type="button"
                 onClick={handleLaunchDemo}
                 disabled={flying}
                 aria-label="Launch Quarte demo"
-                className="q-fade-up q-fade-up-delay-2 q-shimmer q-aura q-pressable group relative mt-8 inline-flex items-center gap-2 overflow-hidden rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#050814] shadow-[0_18px_40px_-18px_rgba(147,197,253,0.55),0_6px_18px_-6px_rgba(0,0,0,0.45)] transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-75"
+                className="q-blur-reveal q-blur-reveal-delay-4 q-shimmer q-aura q-pressable group relative mt-7 inline-flex items-center gap-2 overflow-hidden rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#050814] shadow-[0_18px_40px_-18px_rgba(147,197,253,0.55),0_6px_18px_-6px_rgba(0,0,0,0.45)] transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-75"
               >
                 <span className="relative z-[1]">
                   {flying ? "Flying to San Diego…" : "Demo"}

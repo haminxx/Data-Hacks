@@ -1,6 +1,7 @@
 "use client";
 
 import { EnterpriseHeader } from "@/components/enterprise/EnterpriseHeader";
+import { Reveal, RevealGroup, RevealItem } from "@/components/ui/Reveal";
 import {
   getFinancialProjection,
   getRiskScore,
@@ -54,14 +55,19 @@ export default function EnterpriseRiskAssessmentPage() {
 
       <div className="mx-auto max-w-7xl px-4 py-10 md:px-8">
         <div className="mb-8 max-w-2xl">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/70 backdrop-blur">
+          <div className="q-blur-reveal mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/70 backdrop-blur">
             <Building2 className="h-3.5 w-3.5 text-[#93c5fd]" />
             Underwriting console
           </div>
-          <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+          <h1 className="q-blur-reveal q-blur-reveal-delay-1 text-3xl font-semibold tracking-tight md:text-4xl">
             Portfolio risk overview
           </h1>
-          <p className="mt-3 text-sm leading-relaxed text-white/55">
+          <div
+            aria-hidden
+            className="q-rule mt-3 h-px w-40 bg-gradient-to-r from-transparent via-white/25 to-transparent"
+            style={{ animationDelay: "0.6s" }}
+          />
+          <p className="q-blur-reveal q-blur-reveal-delay-2 mt-3 text-sm leading-relaxed text-white/55">
             Live scores and financial exposure from USGS catalog data (2000–2023)
             and Scripps Rekoske physics-based factors — same model as the public
             risk assessment flow.
@@ -80,53 +86,65 @@ export default function EnterpriseRiskAssessmentPage() {
 
         {fp && rs && (
           <>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-xl border border-white/[0.08] bg-[#0F172A] p-5">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-white/40">
-                  Flagship asset risk index
-                </p>
-                <p className="mt-2 text-3xl font-bold tabular-nums text-white">
-                  {rs.overall}
-                  <span className="text-lg font-medium text-white/35">/100</span>
-                </p>
-                <p className="mt-1 text-xs text-white/45">HSS · demo deep-dive available</p>
-              </div>
-              <div className="rounded-xl border border-white/[0.08] bg-[#0F172A] p-5">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-white/40">
-                  Catalog events (50 km)
-                </p>
-                <p className="mt-2 text-3xl font-bold text-[#1A56DB]">
-                  {fp.events_analyzed.toLocaleString()}
-                </p>
-                <p className="mt-1 text-xs text-white/45">{fp.years_of_data} years of USGS records</p>
-              </div>
-              <div className="rounded-xl border border-white/[0.08] bg-[#0F172A] p-5">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-white/40">
-                  Est. annual premium (HSS)
-                </p>
-                <p className="mt-2 text-3xl font-bold tabular-nums text-white">
-                  ${ins?.annual_premium.toLocaleString() ?? "—"}
-                </p>
-                <p className="mt-1 text-xs text-white/45">{ins?.tier ?? "—"}</p>
-              </div>
-              <div className="rounded-xl border border-white/[0.08] bg-[#0F172A] p-5">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-white/40">
-                  10-yr net position (model)
-                </p>
-                <p
-                  className={`mt-2 text-3xl font-bold tabular-nums ${
-                    y10 && y10.net_position >= 0 ? "text-emerald-300" : "text-red-300"
-                  }`}
-                >
-                  {y10 != null
-                    ? `$${y10.net_position.toLocaleString()}`
-                    : "—"}
-                </p>
-                <p className="mt-1 text-xs text-white/45">Cumulative premium − expected claims</p>
-              </div>
-            </div>
+            <RevealGroup
+              step={0.11}
+              delayChildren={0.1}
+              className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+            >
+              <RevealItem>
+                <div className="rounded-xl border border-white/[0.08] bg-[#0F172A] p-5 transition hover:border-white/[0.15] hover:bg-[#111e33]">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-white/40">
+                    Flagship asset risk index
+                  </p>
+                  <p className="mt-2 text-3xl font-bold tabular-nums text-white">
+                    {rs.overall}
+                    <span className="text-lg font-medium text-white/35">/100</span>
+                  </p>
+                  <p className="mt-1 text-xs text-white/45">HSS · demo deep-dive available</p>
+                </div>
+              </RevealItem>
+              <RevealItem>
+                <div className="rounded-xl border border-white/[0.08] bg-[#0F172A] p-5 transition hover:border-white/[0.15] hover:bg-[#111e33]">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-white/40">
+                    Catalog events (50 km)
+                  </p>
+                  <p className="mt-2 text-3xl font-bold text-[#1A56DB]">
+                    {fp.events_analyzed.toLocaleString()}
+                  </p>
+                  <p className="mt-1 text-xs text-white/45">{fp.years_of_data} years of USGS records</p>
+                </div>
+              </RevealItem>
+              <RevealItem>
+                <div className="rounded-xl border border-white/[0.08] bg-[#0F172A] p-5 transition hover:border-white/[0.15] hover:bg-[#111e33]">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-white/40">
+                    Est. annual premium (HSS)
+                  </p>
+                  <p className="mt-2 text-3xl font-bold tabular-nums text-white">
+                    ${ins?.annual_premium.toLocaleString() ?? "—"}
+                  </p>
+                  <p className="mt-1 text-xs text-white/45">{ins?.tier ?? "—"}</p>
+                </div>
+              </RevealItem>
+              <RevealItem>
+                <div className="rounded-xl border border-white/[0.08] bg-[#0F172A] p-5 transition hover:border-white/[0.15] hover:bg-[#111e33]">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-white/40">
+                    10-yr net position (model)
+                  </p>
+                  <p
+                    className={`mt-2 text-3xl font-bold tabular-nums ${
+                      y10 && y10.net_position >= 0 ? "text-emerald-300" : "text-red-300"
+                    }`}
+                  >
+                    {y10 != null
+                      ? `$${y10.net_position.toLocaleString()}`
+                      : "—"}
+                  </p>
+                  <p className="mt-1 text-xs text-white/45">Cumulative premium − expected claims</p>
+                </div>
+              </RevealItem>
+            </RevealGroup>
 
-            <div className="mt-10 grid gap-4 md:grid-cols-3">
+            <Reveal index={1} className="mt-10 grid gap-4 md:grid-cols-3">
               <Link
                 href="/enterprise/dashboard"
                 className="group flex flex-col justify-between rounded-2xl border border-[#1A56DB]/35 bg-[#1A56DB]/10 p-6 transition hover:border-[#1A56DB]/55 hover:bg-[#1A56DB]/15"
@@ -184,7 +202,7 @@ export default function EnterpriseRiskAssessmentPage() {
                   <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
                 </span>
               </Link>
-            </div>
+            </Reveal>
 
             <p className="mx-auto mt-14 max-w-2xl text-center text-[11px] leading-relaxed text-slate-500">
               Analysis based on {fp.events_analyzed.toLocaleString()} USGS earthquake

@@ -219,20 +219,25 @@ export default function RiskResultsPage() {
       <div className="mx-auto max-w-6xl px-4 md:px-6">
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between lg:mb-8">
           <div>
-            <div className="mb-2 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#93c5fd]/90">
+            <div className="q-blur-reveal mb-2 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#93c5fd]/90">
               <Sparkles className="h-3.5 w-3.5" aria-hidden />
               Assessment report
             </div>
-            <h1 className="text-2xl font-semibold tracking-tight text-white md:text-3xl">
+            <h1 className="q-blur-reveal q-blur-reveal-delay-1 text-2xl font-semibold tracking-tight text-white md:text-3xl">
               HSS · Seismic risk
             </h1>
-            <p className="mt-1 text-sm text-white/50">
+            <div
+              aria-hidden
+              className="q-rule mt-2 h-px w-28 bg-gradient-to-r from-transparent via-white/25 to-transparent"
+              style={{ animationDelay: "0.55s" }}
+            />
+            <p className="q-blur-reveal q-blur-reveal-delay-2 mt-1 text-sm text-white/50">
               Composite score and criteria from USGS catalog + model factors
             </p>
           </div>
           <Link
             href="/risk"
-            className="inline-flex w-fit items-center gap-2 rounded-full border border-white/[0.1] bg-white/[0.04] px-3.5 py-2 text-sm text-white/75 backdrop-blur-sm transition hover:border-white/15 hover:bg-white/[0.07] hover:text-white"
+            className="q-blur-reveal q-blur-reveal-delay-3 inline-flex w-fit items-center gap-2 rounded-full border border-white/[0.1] bg-white/[0.04] px-3.5 py-2 text-sm text-white/75 backdrop-blur-sm transition hover:border-white/15 hover:bg-white/[0.07] hover:text-white"
           >
             <ArrowLeft className="h-4 w-4 shrink-0 opacity-80" />
             Edit address
