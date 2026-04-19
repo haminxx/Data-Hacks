@@ -221,23 +221,63 @@ export default function Map25D({
     }));
   }, [selectedName, features]);
 
+  // Lighting stays cinematic but trimmed — each DirectionalLight costs a
+  // per-fragment dot product across every extruded polygon, so softening
+  // the intensities gives a visibly smoother frame-rate on integrated
+  // GPUs without washing out the building silhouettes.
   const lightingEffect = useMemo(() => {
     const ambient = new AmbientLight({
       color: [255, 255, 255],
-      intensity: 1.25,
+      intensity: 1.1,
     });
     const sun = new DirectionalLight({
       color: [255, 245, 220],
-      intensity: 2.4,
+      intensity: 2.0,
       direction: [-2, -8, -3],
     });
     const fill = new DirectionalLight({
       color: [200, 220, 255],
-      intensity: 1.0,
+      intensity: 0.7,
       direction: [5, -1, -4],
     });
     return new LightingEffect({ ambient, sun, fill });
   }, []);
+
+  // Basemap is completely independent of hover / selection state, so we
+  // keep it in its own memo with no deps. That way the deck.gl diff for
+  // hover events only has to touch the PolygonLayer, not re-instantiate
+  // the TileLayer + BitmapLayer sublayers on every mousemove.
+  const basemapLayer = useMemo(
+    () =>
+      new TileLayer({
+        id: "carto-dark-matter",
+        // Dark Matter = graphic dark basemap with visible street grid +
+        // labels. Non-satellite, reads as a stylized map rather than
+        // imagery.
+        data: [
+          "https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}@2x.png",
+        ],
+        minZoom: 0,
+        maxZoom: 19,
+        tileSize: 256,
+        // Keep a bounded pool so panning around campus doesn't keep
+        // piling texture memory forever on long sessions.
+        maxCacheSize: 200,
+        renderSubLayers: (props) => {
+          const tile = props.tile as unknown as {
+            boundingBox: [[number, number], [number, number]];
+          };
+          const [[west, south], [east, north]] = tile.boundingBox;
+          return new BitmapLayer(props, {
+            id: `${props.id}-bitmap`,
+            data: undefined,
+            image: props.data as string,
+            bounds: [west, south, east, north],
+          });
+        },
+      }),
+    [],
+  );
 
   const selectedId = useMemo(() => {
     if (!selectedName) return null;
@@ -245,32 +285,8 @@ export default function Map25D({
     return hit?.properties.id ?? null;
   }, [features, selectedName]);
 
-  const layers = useMemo(() => {
-    const basemap = new TileLayer({
-      id: "carto-dark-matter",
-      // Dark Matter = graphic dark basemap with visible street grid + labels.
-      // Non-satellite, reads as a stylized map rather than imagery.
-      data: [
-        "https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}@2x.png",
-      ],
-      minZoom: 0,
-      maxZoom: 19,
-      tileSize: 256,
-      renderSubLayers: (props) => {
-        const tile = props.tile as unknown as {
-          boundingBox: [[number, number], [number, number]];
-        };
-        const [[west, south], [east, north]] = tile.boundingBox;
-        return new BitmapLayer(props, {
-          id: `${props.id}-bitmap`,
-          data: undefined,
-          image: props.data as string,
-          bounds: [west, south, east, north],
-        });
-      },
-    });
-
-    const buildings = new PolygonLayer<BuildingFeature>({
+  const buildingsLayer = useMemo(() => {
+    return new PolygonLayer<BuildingFeature>({
       id: "ucsd-buildings-3d",
       data: features,
       extruded: true,
@@ -285,11 +301,13 @@ export default function Map25D({
             ? [255, 255, 255, 230]
             : [255, 255, 255, 55],
       lineWidthMinPixels: 0.6,
+      // Trimmed specular keeps the buildings readable without the
+      // expensive high-shininess Blinn-Phong term on every fragment.
       material: {
         ambient: 0.35,
-        diffuse: 0.85,
-        shininess: 56,
-        specularColor: [180, 200, 230],
+        diffuse: 0.8,
+        shininess: 28,
+        specularColor: [170, 190, 220],
       },
       pickable: true,
       autoHighlight: true,
@@ -316,9 +334,12 @@ export default function Map25D({
         getLineColor: [hoveredId, selectedId],
       },
     });
-
-    return [basemap, buildings];
   }, [features, hoveredId, selectedId]);
+
+  const layers = useMemo(
+    () => [basemapLayer, buildingsLayer],
+    [basemapLayer, buildingsLayer],
+  );
 
   const clampView = useCallback((next: ViewState): ViewState => {
     return {
@@ -339,6 +360,11 @@ export default function Map25D({
         }
         layers={layers}
         effects={[lightingEffect]}
+        // Cap the render DPR at 1.5 even on 3x retina displays. The
+        // visual delta between 1.5x and 3x is imperceptible on a
+        // stylized basemap, but the fragment cost doubles. This alone
+        // gives the biggest single FPS win on high-density laptops.
+        useDevicePixels={1.5}
         getCursor={({ isDragging, isHovering }) =>
           isDragging ? "grabbing" : isHovering ? "pointer" : "grab"
         }

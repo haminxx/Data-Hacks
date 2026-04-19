@@ -52,10 +52,19 @@ export default function HomePage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#050814] text-white">
-      {/* Ambient top glow so the dark page doesn't feel flat. */}
+      {/* Ambient top glow so the dark page doesn't feel flat. Wrapped
+          with q-bloom so it breathes subtly — same principle as a
+          lenticular premium marketing page. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(ellipse_at_top,rgba(26,86,219,0.22)_0%,rgba(5,8,20,0)_70%)]"
+        className="q-bloom pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(ellipse_at_top,rgba(26,86,219,0.22)_0%,rgba(5,8,20,0)_70%)]"
+      />
+      {/* Secondary off-axis bloom — gives the canvas a sense of depth
+          without competing with the hero globe for attention. */}
+      <div
+        aria-hidden
+        className="q-bloom pointer-events-none absolute -left-[10%] top-[20%] h-[480px] w-[60vw] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(147,197,253,0.10)_0%,rgba(5,8,20,0)_70%)] blur-3xl"
+        style={{ animationDelay: "-4s" }}
       />
 
       {/* Hero card. `overflow-hidden` is the key: any part of the globe
@@ -72,7 +81,7 @@ export default function HomePage() {
             }`}
           >
             <div className="relative z-10 w-full max-w-xl md:flex-1">
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/70 backdrop-blur">
+              <div className="q-fade-up mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/70 backdrop-blur">
                 <span className="relative inline-flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#1A56DB]/70" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-[#1A56DB]" />
@@ -80,8 +89,8 @@ export default function HomePage() {
                 Real-time seismic intelligence
               </div>
 
-              <h1 className="text-[28px] font-normal leading-[1.35] tracking-tight md:text-[32px]">
-                <span className="text-white">Quarte</span>{" "}
+              <h1 className="q-fade-up q-fade-up-delay-1 text-[28px] font-normal leading-[1.35] tracking-tight md:text-[32px]">
+                <span className="q-gradient-text font-semibold">Quarte</span>{" "}
                 <span className="text-white/60">
                   bridges disaster preparedness and insurance tech by using
                   3D spatial mapping to guide residents to safety during an
@@ -95,11 +104,13 @@ export default function HomePage() {
                 onClick={handleLaunchDemo}
                 disabled={flying}
                 aria-label="Launch Quarte demo"
-                className="group mt-8 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-semibold text-[#050814] shadow-lg shadow-black/25 transition hover:bg-white/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-75"
+                className="q-fade-up q-fade-up-delay-2 q-shimmer q-aura q-pressable group relative mt-8 inline-flex items-center gap-2 overflow-hidden rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#050814] shadow-[0_18px_40px_-18px_rgba(147,197,253,0.55),0_6px_18px_-6px_rgba(0,0,0,0.45)] transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-75"
               >
-                {flying ? "Flying to San Diego…" : "Demo"}
+                <span className="relative z-[1]">
+                  {flying ? "Flying to San Diego…" : "Demo"}
+                </span>
                 <ArrowRight
-                  className={`h-4 w-4 transition-transform ${
+                  className={`relative z-[1] h-4 w-4 transition-transform ${
                     flying ? "translate-x-1" : "group-hover:translate-x-0.5"
                   }`}
                 />

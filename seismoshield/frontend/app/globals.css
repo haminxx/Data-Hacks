@@ -392,3 +392,194 @@
     transition-duration: 0ms;
   }
 }
+
+/* ---------------------------------------------------------------
+ * Quarte design language — premium utility layer.
+ *
+ * Named with a `q-` prefix so it's obvious at a glance that a class
+ * belongs to our brand system (as opposed to a Tailwind primitive).
+ * We mirror the token pattern documented in VoltAgent's awesome
+ * DESIGN.md collection (color roles + typography + surface stack +
+ * motion budget) so the same classes can be reused across every
+ * page without re-declaring gradients, shimmers or elevation.
+ *
+ * Principles:
+ *   • Dark canvas → accent #1A56DB → accent-muted #93c5fd.
+ *   • Hairline 1px borders @ white 6–10% for all panels & cards.
+ *   • Elevation = ring + drop shadow + inset highlight (never a
+ *     single flat box-shadow).
+ *   • Motion is exclusively transform/opacity so we stay on the
+ *     compositor at 60fps.
+ *   • Reduced-motion users see the same states with animations
+ *     disabled — no jank, no disorientation.
+ * --------------------------------------------------------------- */
+
+.q-gradient-text {
+  background: linear-gradient(
+    92deg,
+    #ffffff 0%,
+    #dbe7ff 42%,
+    #93c5fd 72%,
+    #ffffff 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.q-hairline {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.q-card {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.015) 100%
+  );
+  box-shadow:
+    0 30px 80px -30px rgba(0, 0, 0, 0.8),
+    0 10px 30px -15px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Conic gradient ring that fades in on hover/focus — used on
+   primary CTAs to signal "this is the most important button on
+   the screen" without needing a loud background colour. */
+.q-aura {
+  position: relative;
+  isolation: isolate;
+}
+.q-aura::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from 120deg,
+    rgba(26, 86, 219, 0) 0deg,
+    rgba(26, 86, 219, 0.55) 90deg,
+    rgba(147, 197, 253, 0.5) 200deg,
+    rgba(26, 86, 219, 0) 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+.q-aura:hover::before,
+.q-aura:focus-visible::before {
+  opacity: 1;
+}
+
+/* Diagonal sheen that sweeps across a surface on hover. Anchored
+   to ::after so any text / icon children stay above (z-index on
+   content via default stacking context). */
+@keyframes q-shimmer-sweep {
+  0% {
+    background-position: -150% 0;
+  }
+  100% {
+    background-position: 250% 0;
+  }
+}
+
+.q-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.q-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    115deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.18) 50%,
+    transparent 65%
+  );
+  background-size: 220% 100%;
+  background-position: -150% 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.q-shimmer:hover::after,
+.q-shimmer:focus-visible::after {
+  opacity: 1;
+  animation: q-shimmer-sweep 1.1s ease forwards;
+}
+
+@keyframes q-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.q-fade-up {
+  animation: q-fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.q-fade-up-delay-1 {
+  animation-delay: 0.08s;
+}
+.q-fade-up-delay-2 {
+  animation-delay: 0.18s;
+}
+.q-fade-up-delay-3 {
+  animation-delay: 0.3s;
+}
+
+.q-pressable {
+  transition:
+    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.2s ease;
+}
+.q-pressable:hover {
+  transform: translateY(-1px);
+}
+.q-pressable:active {
+  transform: translateY(1px);
+}
+
+/* Slow, drifting accent bloom used behind hero elements. Keeps the
+   dark canvas from reading flat without adding layout cost. */
+@keyframes q-bloom-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate3d(2%, -1%, 0) scale(1.04);
+    opacity: 0.85;
+  }
+}
+.q-bloom {
+  animation: q-bloom-drift 14s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .q-fade-up,
+  .q-bloom,
+  .q-shimmer::after,
+  .q-aura::before,
+  .q-pressable {
+    animation: none !important;
+    transition: none !important;
+  }
+}

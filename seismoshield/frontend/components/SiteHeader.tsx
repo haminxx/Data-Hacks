@@ -114,14 +114,14 @@ export function SiteHeader() {
         <div className="relative flex items-center gap-2 justify-self-end" ref={menuRef}>
           <Link
             href={ENTERPRISE_HREF}
-            className={`hidden items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition md:inline-flex ${
+            className={`q-shimmer q-pressable hidden items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition md:inline-flex ${
               enterpriseActive(pathname)
-                ? "border-[#1A56DB]/70 bg-[#1A56DB]/25 text-white shadow-[0_0_0_1px_rgba(26,86,219,0.35)]"
-                : "border-[#1A56DB]/40 bg-[#1A56DB]/15 text-[#dbe7ff] hover:border-[#1A56DB]/80 hover:bg-[#1A56DB]/30 hover:text-white"
+                ? "border-[#1A56DB]/70 bg-[#1A56DB]/25 text-white shadow-[0_0_0_1px_rgba(26,86,219,0.35),0_12px_30px_-12px_rgba(26,86,219,0.55)]"
+                : "border-[#1A56DB]/40 bg-[#1A56DB]/15 text-[#dbe7ff] hover:border-[#1A56DB]/80 hover:bg-[#1A56DB]/30 hover:text-white hover:shadow-[0_12px_30px_-16px_rgba(26,86,219,0.55)]"
             }`}
           >
-            <Building2 className="h-3.5 w-3.5" />
-            Enterprise
+            <Building2 className="relative z-[1] h-3.5 w-3.5" />
+            <span className="relative z-[1]">Enterprise</span>
           </Link>
 
           <button

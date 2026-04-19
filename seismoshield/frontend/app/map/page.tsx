@@ -67,6 +67,20 @@ export default function MapPage() {
   const [buildings, setBuildings] = useState<BuildingIndexEntry[]>([]);
   const flyTimerRef = useRef<number | null>(null);
 
+  // Warm the browser cache with the HSS equirectangular texture the
+  // moment /map mounts. It's ~2MB and is the single asset on the
+  // critical path when the user searches for "HSS", so fetching it
+  // idly in the background makes the pano feel instant instead of
+  // stalling behind a visible spinner.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const href = HSS_HOTKEY.panoramaTextureUrl;
+    if (!href) return;
+    const img = new window.Image();
+    img.decoding = "async";
+    img.src = href;
+  }, []);
+
   const clearFlyTimer = () => {
     if (flyTimerRef.current !== null) {
       window.clearTimeout(flyTimerRef.current);
@@ -195,9 +209,14 @@ export default function MapPage() {
       </Link>
 
       {/* During the cinematic fly-in, surface a slim status chip so the user
-          has a confirmation that the map is responding to their click. */}
+          has a confirmation that the map is responding to their click. The
+          q-fade-up keeps it landing softly in sync with the camera tilt. */}
       {isFlying && selected && (
-        <div className="pointer-events-none absolute left-1/2 top-24 z-20 -translate-x-1/2 rounded-full border border-white/15 bg-black/55 px-4 py-1.5 text-[11px] uppercase tracking-[0.22em] text-white/85 backdrop-blur">
+        <div className="q-fade-up pointer-events-none absolute left-1/2 top-24 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/15 bg-black/55 px-4 py-1.5 text-[11px] uppercase tracking-[0.22em] text-white/85 shadow-[0_14px_40px_-12px_rgba(26,86,219,0.45)] backdrop-blur">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#93c5fd]/80" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#93c5fd]" />
+          </span>
           Flying to {selected.name}…
         </div>
       )}
