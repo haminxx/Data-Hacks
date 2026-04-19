@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { memo, useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { cn } from "@/lib/cn";
 
+// Register once at module load. Guarded for SSR so Next's build step
+// (which imports this file on the server) doesn't try to touch window.
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
@@ -31,17 +33,6 @@ const INJECTED_STYLES = `
       linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
     mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
     -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
-  }
-
-  .ce-card-silver {
-    background: linear-gradient(180deg, #FFFFFF 0%, #A1A1AA 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    transform: translateZ(0);
-    filter:
-      drop-shadow(0px 12px 24px rgba(0,0,0,0.8))
-      drop-shadow(0px 4px 8px rgba(0,0,0,0.6));
   }
 
   .ce-premium-card {
@@ -178,7 +169,7 @@ export interface CinematicEmergencyProps
  *          into a live AR evacuation-guidance viewfinder with scan line,
  *          waypoint chevrons, radar sweep, and HUD telemetry.
  */
-export function CinematicEmergency({
+function CinematicEmergencyInner({
   cardHeading = "Guidance, the moment it shakes.",
   cardDescription = (
     <>
@@ -193,45 +184,70 @@ export function CinematicEmergency({
   const containerRef = useRef<HTMLDivElement>(null);
   const mainCardRef = useRef<HTMLDivElement>(null);
   const mockupRef = useRef<HTMLDivElement>(null);
-  const requestRef = useRef<number>(0);
 
   // Parallax tilt on the phone mockup + radial sheen on the deep card.
-  // Uses rAF to avoid piling up gsap.to calls on every mousemove tick.
+  //
+  // Performance notes:
+  //   - Uses gsap.quickTo / quickSetter so we don't allocate a new tween
+  //     object on every mousemove (the old implementation was calling
+  //     `gsap.to(...)` inside a rAF, which churns garbage and interleaves
+  //     badly with ScrollTrigger's own ticker).
+  //   - Skips entirely on touch-only devices (no pointer hover) and on
+  //     users with prefers-reduced-motion.
+  //   - Short-circuits once the user has scrolled past the card acts so
+  //     we're not doing math for nothing during Act 3 / post-pinning.
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
+    const card = mainCardRef.current;
+    const mockup = mockupRef.current;
+    if (!card || !mockup) return;
+
+    const canHover = window.matchMedia("(hover: hover)").matches;
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    if (!canHover || prefersReducedMotion) return;
+
+    const setMouseX = gsap.quickSetter(card, "--mouse-x", "px") as (
+      v: number,
+    ) => void;
+    const setMouseY = gsap.quickSetter(card, "--mouse-y", "px") as (
+      v: number,
+    ) => void;
+    const tiltX = gsap.quickTo(mockup, "rotationX", {
+      duration: 0.9,
+      ease: "power3.out",
+    });
+    const tiltY = gsap.quickTo(mockup, "rotationY", {
+      duration: 0.9,
+      ease: "power3.out",
+    });
+
+    const onMove = (e: MouseEvent) => {
       if (window.scrollY > window.innerHeight * 2) return;
-      cancelAnimationFrame(requestRef.current);
-      requestRef.current = requestAnimationFrame(() => {
-        if (!mainCardRef.current || !mockupRef.current) return;
-        const rect = mainCardRef.current.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-        mainCardRef.current.style.setProperty("--mouse-x", `${mouseX}px`);
-        mainCardRef.current.style.setProperty("--mouse-y", `${mouseY}px`);
-        const xVal = (e.clientX / window.innerWidth - 0.5) * 2;
-        const yVal = (e.clientY / window.innerHeight - 0.5) * 2;
-        gsap.to(mockupRef.current, {
-          rotationY: xVal * 10,
-          rotationX: -yVal * 10,
-          ease: "power3.out",
-          duration: 1.2,
-        });
-      });
+      const rect = card.getBoundingClientRect();
+      setMouseX(e.clientX - rect.left);
+      setMouseY(e.clientY - rect.top);
+      const nx = e.clientX / window.innerWidth - 0.5;
+      const ny = e.clientY / window.innerHeight - 0.5;
+      tiltY(nx * 20);
+      tiltX(-ny * 20);
     };
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      cancelAnimationFrame(requestRef.current);
-    };
+
+    window.addEventListener("mousemove", onMove, { passive: true });
+    return () => window.removeEventListener("mousemove", onMove);
   }, []);
 
   // The three-act scroll timeline.
   useEffect(() => {
-    const isMobile = window.innerWidth < 768;
+    const mobileQuery = window.matchMedia("(max-width: 767px)");
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
 
     const ctx = gsap.context(() => {
-      // Starting state. Everything the scroll will touch is hidden /
-      // displaced so we can reveal it deterministically.
+      // Starting state. Batched into a single gsap.set per distinct
+      // initial pose so we only hit the style engine a handful of
+      // times on mount.
       gsap.set(".ce-notif", {
         autoAlpha: 0,
         y: -120,
@@ -258,9 +274,21 @@ export function CinematicEmergency({
       });
       gsap.set(".ce-ar-hud", { autoAlpha: 0, y: 12 });
 
-      const introTl = gsap.timeline({ delay: 0.25 });
-      introTl.to(".ce-notif", {
+      // Respect reduced-motion: drop straight into the final resting
+      // pose of Act 1 and skip the scroll-pinned cinematic entirely.
+      if (prefersReducedMotion) {
+        gsap.set(".ce-notif", {
+          autoAlpha: 1,
+          y: 0,
+          scale: 1,
+          filter: "blur(0px)",
+        });
+        return;
+      }
+
+      gsap.to(".ce-notif", {
         duration: 1.1,
+        delay: 0.25,
         autoAlpha: 1,
         y: 0,
         scale: 1,
@@ -278,8 +306,14 @@ export function CinematicEmergency({
           pin: true,
           scrub: 1,
           anticipatePin: 1,
+          // Recompute pin offsets + the Act-3 zoom scale when the
+          // viewport crosses the mobile breakpoint; keeps the scene
+          // stable through rotation / devtools resizes.
+          invalidateOnRefresh: true,
         },
       });
+
+      const zoomScale = () => (mobileQuery.matches ? 7 : 9);
 
       scrollTl
         // Notification drifts back and out while the deep card slides in.
@@ -403,7 +437,7 @@ export function CinematicEmergency({
         .to(
           ".ce-mockup-wrapper",
           {
-            scale: isMobile ? 7 : 9,
+            scale: zoomScale(),
             autoAlpha: 0,
             filter: "blur(8px)",
             ease: "power3.in",
@@ -905,3 +939,10 @@ export function CinematicEmergency({
     </div>
   );
 }
+
+// Memoized so the page shell rendering at /emergency (which mounts
+// this through next/dynamic) doesn't re-run the effect block on
+// incidental parent updates. Props are plain strings so shallow
+// compare is the right default.
+export const CinematicEmergency = memo(CinematicEmergencyInner);
+CinematicEmergency.displayName = "CinematicEmergency";
