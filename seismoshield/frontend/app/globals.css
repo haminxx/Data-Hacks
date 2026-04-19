@@ -47,3 +47,92 @@
   animation-delay: -10.5s;
   width: min(115vw, 820px);
 }
+
+/* Earthquake simulator — shake (utility classes) */
+@keyframes shake-low {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(2px, -2px);
+  }
+  50% {
+    transform: translate(-3px, 1px);
+  }
+  75% {
+    transform: translate(2px, 2px);
+  }
+}
+
+@keyframes shake-medium {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  20% {
+    transform: translate(8px, -6px) rotate(0.6deg);
+  }
+  40% {
+    transform: translate(-8px, 7px) rotate(-0.6deg);
+  }
+  60% {
+    transform: translate(7px, 8px) rotate(0.4deg);
+  }
+  80% {
+    transform: translate(-6px, -5px) rotate(-0.4deg);
+  }
+}
+
+@keyframes shake-high {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  15% {
+    transform: translate(14px, -12px) rotate(2deg);
+  }
+  35% {
+    transform: translate(-15px, 10px) rotate(-2deg);
+  }
+  55% {
+    transform: translate(12px, 14px) rotate(1.5deg);
+  }
+  75% {
+    transform: translate(-13px, -11px) rotate(-1.5deg);
+  }
+}
+
+.shake-low {
+  animation-name: shake-low;
+  animation-duration: 0.5s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: 3;
+}
+
+.shake-medium {
+  animation-name: shake-medium;
+  animation-duration: 0.4s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: 4;
+}
+
+.shake-high {
+  animation-name: shake-high;
+  animation-duration: 0.3s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: 6;
+}
+
+/* Simulator overlays */
+.fire-overlay {
+  filter: sepia(0.45) hue-rotate(-15deg) saturate(1.35) brightness(1.08);
+}
+
+.dark-overlay {
+  filter: brightness(0.25);
+}
+
+.debris-overlay {
+  filter: blur(1.5px) contrast(1.18);
+}
