@@ -71,6 +71,45 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+def feature_row_epicenter_to_site(
+    mag: float,
+    depth: float,
+    epicenter_lat: float,
+    epicenter_lon: float,
+    site_lat: float,
+    site_lon: float,
+) -> pd.DataFrame:
+    """
+    One row of FEATURES for ML inference: epicenter → site distance (km).
+    Use (REC_GYM_LAT, REC_GYM_LON) as site for building-level prediction at Rec Gym.
+    """
+    d = float(
+        haversine_km(
+            np.array([epicenter_lat], dtype=np.float64),
+            np.array([epicenter_lon], dtype=np.float64),
+            site_lat,
+            site_lon,
+        )[0]
+    )
+    dist_epi_km = float(np.maximum(d, 0.01))
+    log_dist = float(np.log1p(dist_epi_km))
+    m = float(mag)
+    denom = float(np.maximum(dist_epi_km, 0.5))
+    energy_proxy = float(np.power(10.0, 1.5 * m) / denom)
+    dep = float(depth) if np.isfinite(depth) else 8.0
+    dep = max(dep, 1e-3)
+    depth_factor = float(1.0 / np.log1p(dep))
+    row = {
+        "mag": m,
+        "dist_epi_km": dist_epi_km,
+        "log_dist": log_dist,
+        "energy_proxy": energy_proxy,
+        "depth_factor": depth_factor,
+        "soil_amp": SOIL_AMP,
+    }
+    return pd.DataFrame([row])
+
+
 def pgv_to_risk_tier(pgv: float) -> dict[str, Any]:
     """
     Map PGV (cm/s) to display tier. Thresholds are heuristic for demo / hackathon UX.
