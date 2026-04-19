@@ -307,7 +307,10 @@ export function GooeySearchBar<T extends SearchableItem>({
     const id = window.setTimeout(() => {
       if (cancelled) return;
       const hits = items
-        .filter((i) => i.label.toLowerCase().includes(query))
+        .filter((i) => {
+          const blob = `${i.label} ${i.meta ?? ""}`.toLowerCase();
+          return blob.includes(query);
+        })
         .slice(0, maxResults);
       setSearchData(hits as T[]);
       setIsLoading(false);

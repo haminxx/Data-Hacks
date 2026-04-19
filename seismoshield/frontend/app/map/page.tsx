@@ -40,15 +40,18 @@ type Phase = "idle" | "flying" | "street";
 // surfaces this as a search result. Picking it flies the map to the
 // building's centroid, then opens the in-map 360° overlay instead of
 // Google Street View. Coordinates are approximate UCSD HSS.
+// `name` MUST match `properties.name` in `public/ucsd_buildings_full.geojson`
+// so Map25D can find the polygon and fly the camera to the real centroid.
+// Replace `panoramaTextureUrl` with your final HSS equirectangular asset when ready.
 const HSS_HOTKEY: BuildingSearchItem = {
   id: "hss-pano",
-  name: "Humanities and Social Sciences Building",
-  label: "Humanities and Social Sciences Building",
-  meta: "HSS · 360°",
+  name: "Humanities & Social Sciences",
+  label: "Humanities & Social Sciences (HSS)",
+  meta: "HSS · 360° · campus capture",
   category: "education",
   height: 18,
-  lng: -117.2416,
-  lat: 32.8837,
+  lng: -117.24169,
+  lat: 32.87825,
   panoramaMode: "pano",
   panoramaTextureUrl: "/pano/hss-360.png",
 };
@@ -102,12 +105,14 @@ export default function MapPage() {
   }, []);
 
   const searchItems = useMemo<BuildingSearchItem[]>(() => {
-    const fromMap = buildings.map<BuildingSearchItem>((b) => ({
-      ...b,
-      id: b.id,
-      label: b.name,
-      meta: b.category,
-    }));
+    const fromMap = buildings
+      .filter((b) => b.name !== HSS_HOTKEY.name)
+      .map<BuildingSearchItem>((b) => ({
+        ...b,
+        id: b.id,
+        label: b.name,
+        meta: b.category,
+      }));
     // Prepend the HSS hotkey so it surfaces instantly when the user
     // starts typing "HSS" or "Humanities".
     return [HSS_HOTKEY, ...fromMap];

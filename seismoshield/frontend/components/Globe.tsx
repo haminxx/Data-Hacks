@@ -138,14 +138,14 @@ export const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
       if (width === 0 || globe) return;
 
       globe = createGlobe(canvas, {
-        devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2),
+        devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2.5),
         width: width * 2,
         height: width * 2,
         phi: 0,
         theta: BASE_THETA,
         dark: 1,
         diffuse: 1.4,
-        mapSamples: 16000,
+        mapSamples: 20000,
         mapBrightness: 7,
         baseColor: [0.25, 0.3, 0.45],
         markerColor: [51 / 255, 204 / 255, 221 / 255],
@@ -234,6 +234,13 @@ export const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
           );
           const sdPhiOffset = caliPhiOffset + toSanDiegoDelta;
           const sdThetaOffset = SAN_DIEGO_LAT_RAD - BASE_THETA;
+          // Final framing tweak: pull the San Diego beacon slightly left and
+          // toward the limb, matching the reference still (cyan glow near the
+          // globe edge rather than dead-center).
+          const SD_FRAMING_PHI = 0.13;
+          const SD_FRAMING_THETA = -0.055;
+          const sdPhiOffsetFramed = sdPhiOffset + SD_FRAMING_PHI;
+          const sdThetaOffsetFramed = sdThetaOffset + SD_FRAMING_THETA;
 
           const el = containerRef.current;
           // Rotation cinematic pacing. The visual zoom itself is driven
@@ -277,9 +284,10 @@ export const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
               const s2 = Math.min(1, (elapsed - stage1Duration) / stage2Duration);
               const e2 = easeOutQuart(s2);
               phiOffsetRef.current =
-                caliPhiOffset + (sdPhiOffset - caliPhiOffset) * e2;
+                caliPhiOffset + (sdPhiOffsetFramed - caliPhiOffset) * e2;
               thetaOffsetRef.current =
-                caliThetaOffset + (sdThetaOffset - caliThetaOffset) * e2;
+                caliThetaOffset +
+                (sdThetaOffsetFramed - caliThetaOffset) * e2;
             }
 
             if (t < 1) {

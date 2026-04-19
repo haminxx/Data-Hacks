@@ -50,15 +50,17 @@ export default function HomePage() {
       {/* ── Hero card: Ruixen-style, tagline + small Demo on the left. The
            globe lives in the fixed container below and visually overflows
            into the card's bottom-right corner. */}
-      <section className="relative mx-auto flex min-h-screen max-w-7xl items-center px-6 pt-28 pb-16 md:px-12 md:pt-32">
+      <section className="relative mx-auto flex min-h-screen max-w-7xl items-center px-4 pt-24 pb-28 sm:px-6 sm:pt-28 md:px-12 md:pb-16 md:pt-32">
         <div
-          className={`relative w-full overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#0b1224] via-[#080e1e] to-[#050814] px-8 py-14 shadow-[0_40px_120px_-40px_rgba(26,86,219,0.5)] transition-opacity duration-500 md:px-16 md:py-20 ${
+          className={`relative w-full overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#0b1224] via-[#080e1e] to-[#050814] px-5 py-10 shadow-[0_40px_120px_-40px_rgba(26,86,219,0.5)] transition-opacity duration-500 sm:px-8 sm:py-14 md:px-16 md:py-20 ${
             flying ? "opacity-0" : "opacity-100"
           }`}
         >
-          <div className="relative flex flex-col-reverse items-start justify-between gap-12 md:flex-row md:items-center">
-            {/* LEFT — tagline + small Demo button */}
-            <div className="relative z-10 max-w-xl">
+          {/* Mobile / narrow: copy first, visually above the globe; desktop:
+              row with copy left and room for the fixed globe on the right */}
+          <div className="relative flex flex-col items-start justify-between gap-8 md:flex-row md:items-center md:gap-12">
+            {/* Tagline + Demo — sits higher on small viewports */}
+            <div className="relative z-10 w-full max-w-xl md:flex-1">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/70 backdrop-blur">
                 <span className="relative inline-flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#1A56DB]/70" />
@@ -93,10 +95,9 @@ export default function HomePage() {
               </button>
             </div>
 
-            {/* RIGHT — layout spacer. The actual globe lives in the fixed
-                container below so it can smoothly morph from the card
-                corner out to full-screen on launch. */}
-            <div className="relative h-[220px] w-full max-w-xl md:h-[260px]" />
+            {/* Layout spacer so the fixed globe does not cover the hero copy on
+                small screens (short column reserves space under the text). */}
+            <div className="relative h-[min(42vh,260px)] w-full shrink-0 md:max-w-xl md:flex-1 md:translate-y-4 md:min-h-[260px]" />
           </div>
         </div>
       </section>
@@ -106,7 +107,7 @@ export default function HomePage() {
            rotation-plus-zoom inside <Globe/> reads as a proper fly-by
            diving toward San Diego. */}
       <div
-        className="pointer-events-none fixed z-30 ease-[cubic-bezier(0.16,1,0.3,1)]"
+        className="pointer-events-none fixed z-30 ease-[cubic-bezier(0.16,1,0.3,1)] [--globe-w:min(92vw,420px)] md:[--globe-w:620px]"
         style={{
           transition: `left ${ROUTE_AT_MS}ms, top ${ROUTE_AT_MS}ms, right ${ROUTE_AT_MS}ms, bottom ${ROUTE_AT_MS}ms, width ${ROUTE_AT_MS}ms, height ${ROUTE_AT_MS}ms, transform ${ROUTE_AT_MS}ms`,
           ...(flying
@@ -118,11 +119,11 @@ export default function HomePage() {
                 transform: "translate(-50%, -50%) scale(1)",
               }
             : {
-                right: "-14rem",
-                bottom: "-10rem",
-                width: "620px",
-                height: "620px",
-                transform: "scale(1.1)",
+                right: "max(-3.5rem, calc(var(--globe-w) * -0.22))",
+                bottom: "max(-5.5rem, calc(var(--globe-w) * -0.35))",
+                width: "var(--globe-w)",
+                height: "var(--globe-w)",
+                transform: "scale(1.06)",
               }),
         }}
       >

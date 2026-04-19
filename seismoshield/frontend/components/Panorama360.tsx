@@ -11,6 +11,7 @@ import {
 import {
   Suspense,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -138,12 +139,30 @@ interface SphereEnvironmentProps {
   onPointerDown?: (event: ThreeEvent<PointerEvent>) => void;
 }
 
+/**
+ * Equirectangular sphere with mipmaps + anisotropic filtering so the
+ * panorama stays sharper at oblique viewing angles. Segment count is
+ * high enough to hide tessellation on large screens.
+ */
 function SphereEnvironment({ textureUrl, onPointerDown }: SphereEnvironmentProps) {
   const texture = useTexture(textureUrl);
-  texture.colorSpace = THREE.SRGBColorSpace;
+  const gl = useThree((s) => s.gl);
+
+  useLayoutEffect(() => {
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.wrapS = THREE.ClampToEdgeWrapping;
+    texture.wrapT = THREE.ClampToEdgeWrapping;
+    texture.generateMipmaps = true;
+    texture.minFilter = THREE.LinearMipmapLinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    const maxAniso = gl.capabilities.getMaxAnisotropy?.() ?? 8;
+    texture.anisotropy = Math.min(16, maxAniso);
+    texture.needsUpdate = true;
+  }, [texture, gl]);
+
   return (
     <mesh onPointerDown={onPointerDown}>
-      <sphereGeometry args={[50, 64, 64]} />
+      <sphereGeometry args={[50, 96, 96]} />
       <meshBasicMaterial map={texture} side={THREE.BackSide} toneMapped={false} />
     </mesh>
   );
@@ -285,14 +304,16 @@ export default function Panorama360({
         // recompute near/far + position against the GLB bbox). The large
         // default `far` and small `near` prevent accidental clipping on
         // scenes whose authoring units we don't know yet.
-        camera={{ position: [0, 0, 0.01], fov: 75, near: 0.001, far: 10000 }}
+        camera={{ position: [0, 0, 0.01], fov: 72, near: 0.001, far: 10000 }}
+        dpr={[1, 2.5]}
         gl={{
           antialias: true,
+          alpha: false,
           powerPreference: "high-performance",
           toneMapping: THREE.NoToneMapping,
           outputColorSpace: THREE.SRGBColorSpace,
         }}
-        className="h-full w-full"
+        className="h-full w-full [&>div]:h-full"
       >
         {/* Scene background is dark so any missing geometry still reads
             as a solid void rather than transparent (which would show the
@@ -330,11 +351,11 @@ export default function Panorama360({
         <OrbitControls
           enableZoom={false}
           enablePan={false}
-          rotateSpeed={-0.35}
+          rotateSpeed={-0.28}
           enableDamping
-          dampingFactor={0.08}
-          minPolarAngle={0.15}
-          maxPolarAngle={Math.PI - 0.15}
+          dampingFactor={0.052}
+          minPolarAngle={0.12}
+          maxPolarAngle={Math.PI - 0.12}
         />
       </Canvas>
 
