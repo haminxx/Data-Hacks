@@ -53,7 +53,7 @@ const HSS_HOTKEY: BuildingSearchItem = {
   lng: -117.24169,
   lat: 32.87825,
   panoramaMode: "pano",
-  panoramaTextureUrl: "/pano/hss-360.png",
+  panoramaTextureUrl: "/pano/hss-exterior-360.png",
 };
 
 // Keep this in sync with the flyToBuilding transition inside <Map25D/>.

@@ -39,7 +39,7 @@ export default function BuildingPanorama({
       <header className="flex items-start justify-between gap-3 border-b border-white/10 bg-[#0F172A]/80 px-4 py-3 backdrop-blur">
         <div className="min-w-0">
           <p className="text-[10px] uppercase tracking-[0.2em] text-white/50">
-            Indoor 360° · Interior capture
+            Street View 360°
           </p>
           <h2 className="mt-0.5 truncate text-base font-semibold text-white">
             {target.name}
@@ -55,7 +55,7 @@ export default function BuildingPanorama({
           type="button"
           onClick={onClose}
           className="shrink-0 rounded-full border border-white/15 bg-white/5 p-1.5 text-white/80 transition hover:bg-white/10"
-          aria-label="Close 360 view"
+          aria-label="Close Street View"
         >
           <X className="h-4 w-4" />
         </button>
@@ -70,7 +70,7 @@ export default function BuildingPanorama({
       </div>
 
       <footer className="border-t border-white/10 bg-[#0F172A]/80 px-4 py-2 text-[10px] uppercase tracking-[0.18em] text-white/40 backdrop-blur">
-        Quarte · 360° site capture · Drag to look around
+        Quarte · Campus 360° capture · Drag to look around
       </footer>
     </aside>
   );

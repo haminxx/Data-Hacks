@@ -31,7 +31,7 @@ export default function HomePage() {
     if (flying) return;
     setFlying(true);
     // Kick off the globe's two-stage rotate-to-San-Diego in parallel with
-    // the container's CSS expand. We don't await it — the timers below
+    // the card's CSS expand. We don't await it — the timers below
     // orchestrate the hand-off to /map deterministically.
     void globeRef.current?.flyToSanDiego();
 
@@ -47,19 +47,19 @@ export default function HomePage() {
         className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(ellipse_at_top,rgba(26,86,219,0.22)_0%,rgba(5,8,20,0)_70%)]"
       />
 
-      {/* ── Hero card: Ruixen-style, tagline + small Demo on the left. The
-           globe lives in the fixed container below and visually overflows
-           into the card's bottom-right corner. */}
+      {/* Hero card. `overflow-hidden` is the key: any part of the globe
+          that hangs past the card corner gets clipped so the globe reads
+          as a rounded element *inside* the card, not a free-floating
+          planet. On Demo, the inner globe expands to `inset-0` and fills
+          ONLY this card — the cross-fade then hands off to /map. */}
       <section className="relative mx-auto flex min-h-screen max-w-7xl items-center px-4 pt-24 pb-28 sm:px-6 sm:pt-28 md:px-12 md:pb-16 md:pt-32">
-        <div
-          className={`relative w-full overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#0b1224] via-[#080e1e] to-[#050814] px-5 py-10 shadow-[0_40px_120px_-40px_rgba(26,86,219,0.5)] transition-opacity duration-500 sm:px-8 sm:py-14 md:px-16 md:py-20 ${
-            flying ? "opacity-0" : "opacity-100"
-          }`}
-        >
-          {/* Mobile / narrow: copy first, visually above the globe; desktop:
-              row with copy left and room for the fixed globe on the right */}
-          <div className="relative flex flex-col items-start justify-between gap-8 md:flex-row md:items-center md:gap-12">
-            {/* Tagline + Demo — sits higher on small viewports */}
+        <div className="relative w-full overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#0b1224] via-[#080e1e] to-[#050814] px-5 py-10 shadow-[0_40px_120px_-40px_rgba(26,86,219,0.5)] sm:px-8 sm:py-14 md:px-16 md:py-20">
+          {/* Tagline + Demo stack. Fades out as the globe takes over. */}
+          <div
+            className={`relative z-20 flex flex-col items-start justify-between gap-8 transition-opacity duration-700 md:flex-row md:items-center md:gap-12 ${
+              flying ? "pointer-events-none opacity-0" : "opacity-100"
+            }`}
+          >
             <div className="relative z-10 w-full max-w-xl md:flex-1">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/70 backdrop-blur">
                 <span className="relative inline-flex h-2 w-2">
@@ -95,42 +95,50 @@ export default function HomePage() {
               </button>
             </div>
 
-            {/* Layout spacer so the fixed globe does not cover the hero copy on
-                small screens (short column reserves space under the text). */}
-            <div className="relative h-[min(42vh,260px)] w-full shrink-0 md:max-w-xl md:flex-1 md:translate-y-4 md:min-h-[260px]" />
+            {/* Reserves right-column space on desktop so the copy + globe
+                don't collide. On mobile, space is reserved below by the
+                card's padding + min-height so the globe sits under the
+                tagline, clipped by the card corner. */}
+            <div className="relative h-[min(38vh,240px)] w-full shrink-0 md:h-[320px] md:max-w-xl md:flex-1" />
+          </div>
+
+          {/* Globe — absolute inside the card so `overflow-hidden` on the
+              parent clips anything that would otherwise spill past the
+              card edge. `inset` transitions drive the idle → flying grow.
+              pointer-events-none on the shell keeps the Demo button
+              clickable; the inner div re-enables pointer events just
+              on the globe so it stays interactive. */}
+          <div
+            className="pointer-events-none absolute z-10 ease-[cubic-bezier(0.16,1,0.3,1)]"
+            style={{
+              transition: `inset ${ROUTE_AT_MS}ms, width ${ROUTE_AT_MS}ms, height ${ROUTE_AT_MS}ms, right ${ROUTE_AT_MS}ms, bottom ${ROUTE_AT_MS}ms, transform ${ROUTE_AT_MS}ms`,
+              ...(flying
+                ? {
+                    inset: "0",
+                    right: "0",
+                    bottom: "0",
+                    width: "auto",
+                    height: "auto",
+                    transform: "scale(1.02)",
+                  }
+                : {
+                    // Parked: bottom-right of the card, partially
+                    // clipped by the card corner. Size is responsive to
+                    // the card, not the viewport.
+                    right: "clamp(-10rem, -6vw, -4rem)",
+                    bottom: "clamp(-10rem, -6vw, -4rem)",
+                    width: "clamp(320px, 52vw, 620px)",
+                    height: "clamp(320px, 52vw, 620px)",
+                    transform: "scale(1.04)",
+                  }),
+            }}
+          >
+            <div className="pointer-events-auto h-full w-full">
+              <Globe ref={globeRef} className="h-full w-full" />
+            </div>
           </div>
         </div>
       </section>
-
-      {/* ── Globe container. Morphs from the parked bottom-right pose
-           (resting) to a full-screen centered pose (flying) so the
-           rotation-plus-zoom inside <Globe/> reads as a proper fly-by
-           diving toward San Diego. */}
-      <div
-        className="pointer-events-none fixed z-30 ease-[cubic-bezier(0.16,1,0.3,1)] [--globe-w:min(92vw,420px)] md:[--globe-w:620px]"
-        style={{
-          transition: `left ${ROUTE_AT_MS}ms, top ${ROUTE_AT_MS}ms, right ${ROUTE_AT_MS}ms, bottom ${ROUTE_AT_MS}ms, width ${ROUTE_AT_MS}ms, height ${ROUTE_AT_MS}ms, transform ${ROUTE_AT_MS}ms`,
-          ...(flying
-            ? {
-                left: "50%",
-                top: "50%",
-                width: "120vmax",
-                height: "120vmax",
-                transform: "translate(-50%, -50%) scale(1)",
-              }
-            : {
-                right: "max(-3.5rem, calc(var(--globe-w) * -0.22))",
-                bottom: "max(-5.5rem, calc(var(--globe-w) * -0.35))",
-                width: "var(--globe-w)",
-                height: "var(--globe-w)",
-                transform: "scale(1.06)",
-              }),
-        }}
-      >
-        <div className="pointer-events-auto h-full w-full">
-          <Globe ref={globeRef} className="h-full w-full" />
-        </div>
-      </div>
 
       {/* Slow cross-fade. Starts while the globe is still rotating, so
           the map screen gradually reveals as if the camera is pulling
