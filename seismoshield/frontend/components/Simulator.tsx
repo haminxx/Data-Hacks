@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 
+import { GeminiTips } from "@/components/GeminiTips";
 import { WAYPOINTS, type EscapeDirection } from "@/lib/waypoints";
 
 export type SimulatorScenario =
@@ -66,15 +67,19 @@ export function Simulator({ magnitude, scenario, riskTier }: SimulatorProps) {
 
   return (
     <div className="relative flex h-full min-h-0 w-full flex-col bg-[#0F172A]">
-      <header className="relative z-20 flex flex-shrink-0 flex-wrap items-center gap-2 border-b border-white/10 bg-[#0b1224]/95 px-3 py-2 text-xs sm:text-sm">
-        <span className="font-semibold text-white">{wp.label}</span>
-        <span className="rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-white/80">
+      <header className="relative z-20 flex flex-shrink-0 flex-wrap items-center gap-2 border-b border-white/[0.08] bg-surface-raised/95 px-3 py-2.5 text-xs shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)] sm:text-sm">
+        <span className="max-w-[40%] truncate font-semibold text-white sm:max-w-none">
+          {wp.label}
+        </span>
+        <span className="rounded-full border border-white/12 bg-white/[0.06] px-2.5 py-0.5 text-[11px] font-medium text-white/85">
           Stop {index + 1}/{total}
         </span>
-        <span className="rounded-full border border-[#1A56DB]/40 bg-[#1A56DB]/20 px-2 py-0.5 text-[#93c5fd]">
+        <span className="rounded-full border border-brand/35 bg-brand/15 px-2.5 py-0.5 text-[11px] font-medium text-brand-bright">
           {riskTier}
         </span>
-        <span className="text-white/70">M {magnitude.toFixed(1)}</span>
+        <span className="ml-auto font-mono tabular-nums text-white/60">
+          M {magnitude.toFixed(1)}
+        </span>
       </header>
 
       <div className="relative min-h-0 flex-1 overflow-hidden">
@@ -124,38 +129,63 @@ export function Simulator({ magnitude, scenario, riskTier }: SimulatorProps) {
           >
             ↑
           </div>
-          <p className="rounded-full bg-black/50 px-3 py-1 text-xs font-medium text-white/90 backdrop-blur-sm">
+          <p className="rounded-full border border-emerald-500/25 bg-emerald-950/40 px-3 py-1.5 text-[11px] font-medium text-emerald-100/95 shadow-lg backdrop-blur-sm">
             EXIT · {wp.exitDistance}
           </p>
         </div>
 
-        <aside className="absolute right-0 top-12 z-10 max-h-[55%] w-[min(100%,20rem)] overflow-y-auto rounded-l-lg border border-white/10 bg-[#0b1224]/90 p-3 text-xs shadow-xl backdrop-blur-md sm:top-14 sm:max-h-[60%] sm:p-4 sm:text-sm">
-          <p className="font-semibold text-[#1A56DB]">Tips</p>
-          <dl className="mt-2 space-y-2 text-white/85">
+        <aside className="pointer-events-auto absolute right-0 top-12 z-20 max-h-[min(78vh,520px)] w-[min(100%,20rem)] overflow-y-auto rounded-l-2xl border border-white/[0.08] bg-surface-raised/95 p-3 text-xs shadow-card backdrop-blur-md sm:top-14 sm:p-4 sm:text-sm">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-bright">
+            Waypoint tips
+          </p>
+          <GeminiTips
+            waypointLabel={wp.label}
+            waypointDescription={wp.description}
+            magnitude={magnitude}
+            riskTier={riskTier}
+          />
+          <p className="mt-4 text-[10px] font-semibold uppercase tracking-wider text-white/45">
+            Scene guidance
+          </p>
+          <dl className="mt-2 space-y-3 text-white/85">
             <div>
-              <dt className="text-[10px] uppercase text-white/45">General</dt>
+              <dt className="text-[10px] uppercase tracking-wide text-white/40">
+                General
+              </dt>
               <dd>{wp.tips.general}</dd>
             </div>
             <div>
-              <dt className="text-[10px] uppercase text-white/45">Hazard</dt>
+              <dt className="text-[10px] uppercase tracking-wide text-white/40">
+                Hazard
+              </dt>
               <dd>{wp.tips.hazard}</dd>
             </div>
             <div>
-              <dt className="text-[10px] uppercase text-white/45">Action</dt>
+              <dt className="text-[10px] uppercase tracking-wide text-white/40">
+                Action
+              </dt>
               <dd>{wp.tips.action}</dd>
             </div>
             <div>
-              <dt className="text-[10px] uppercase text-white/45">Exit</dt>
+              <dt className="text-[10px] uppercase tracking-wide text-white/40">
+                Exit
+              </dt>
               <dd>{wp.tips.exit}</dd>
             </div>
           </dl>
         </aside>
       </div>
 
-      <footer className="relative z-20 flex flex-shrink-0 flex-col gap-2 border-t border-white/10 bg-[#0b1224]/95 px-3 py-3">
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+      <footer className="relative z-20 flex flex-shrink-0 flex-col gap-3 border-t border-white/[0.08] bg-surface-raised/98 px-3 py-3 sm:px-4">
+        <div className="flex items-center justify-between gap-2 text-[10px] uppercase tracking-wider text-white/35">
+          <span>Route progress</span>
+          <span className="font-mono tabular-nums text-white/50">
+            {Math.round(progress)}%
+          </span>
+        </div>
+        <div className="h-2 w-full overflow-hidden rounded-full bg-white/[0.08]">
           <div
-            className="h-full rounded-full bg-[#1A56DB] transition-[width] duration-300"
+            className="h-full rounded-full bg-gradient-to-r from-brand-dim to-brand transition-[width] duration-300 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -164,22 +194,22 @@ export function Simulator({ magnitude, scenario, riskTier }: SimulatorProps) {
             type="button"
             onClick={goBack}
             disabled={index === 0}
-            className="rounded-lg border border-white/20 px-4 py-2 text-sm text-white/90 hover:bg-white/5 disabled:opacity-40"
+            className="min-h-[44px] min-w-[88px] rounded-xl border border-white/15 px-4 py-2.5 text-sm font-medium text-white/90 transition hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-35"
           >
             Back
           </button>
           <button
             type="button"
             onClick={triggerShake}
-            className="rounded-lg bg-[#1A56DB] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1647b3]"
+            className="min-h-[44px] flex-1 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-glow transition hover:bg-[#1647b3] sm:max-w-[200px] sm:flex-none"
           >
-            Simulate Shake
+            Simulate shake
           </button>
           <button
             type="button"
             onClick={goNext}
             disabled={index >= total - 1}
-            className="rounded-lg border border-white/20 px-4 py-2 text-sm text-white/90 hover:bg-white/5 disabled:opacity-40"
+            className="min-h-[44px] min-w-[88px] rounded-xl border border-white/15 px-4 py-2.5 text-sm font-medium text-white/90 transition hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-35"
           >
             Next
           </button>

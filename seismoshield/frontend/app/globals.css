@@ -2,6 +2,44 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    --bg: #0f172a;
+    --accent: #1a56db;
+    --accent-muted: #93c5fd;
+    --surface: #0b1224;
+    --ring: rgba(26, 86, 219, 0.45);
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+  ::selection {
+    background: rgba(26, 86, 219, 0.35);
+    color: #fff;
+  }
+}
+
+@layer components {
+  .hero-gradient-mesh {
+    background: radial-gradient(
+        ellipse 90% 60% at 50% -30%,
+        rgba(26, 86, 219, 0.14),
+        transparent 55%
+      ),
+      radial-gradient(
+        ellipse 50% 45% at 100% 20%,
+        rgba(26, 86, 219, 0.06),
+        transparent 50%
+      ),
+      #0f172a;
+  }
+}
+
 /* Landing: slow concentric pulse (accent #1A56DB @ 8% opacity) */
 @keyframes landing-pulse-scale {
   0%,

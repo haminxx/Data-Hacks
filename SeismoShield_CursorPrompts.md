@@ -118,29 +118,43 @@ I will run this first to understand the column names before we write the model.
 ```
 [CONTEXT BLOCK]
 
-The Rekoske dataset columns are: [PASTE YOUR ACTUAL COLUMNS HERE AFTER RUNNING STEP 4]
+I have three dataset files in backend/data/rekoske/:
+1. query.csv — 3,594 real SoCal earthquakes from USGS
+   Columns: time, latitude, longitude, depth, mag, magType, nst, gap, dmin, rms, net, id, updated, place, type, horizontalError, depthError, magError, magNst, status, locationSource, magSource
 
-Update backend/train.py and backend/model.py to:
+2. seismos_16_receivers.npy — Rekoske Scripps dataset
+   Shape: (16 receivers, 600 time steps, 500 simulations)
+   Contains ground velocity time series. PGV = max(abs(signal)) across time axis.
 
-1. In model.py:
-   - Define REC_GYM_LAT = 32.8786, REC_GYM_LON = -117.2364
-   - Map dataset columns to: magnitude, epicenter_lat, epicenter_lon, pgv
-   - Function add_features(df) that adds:
-     * dist_epi_km: haversine distance from epicenter to Rec Gym
-     * log_dist: log1p of dist_epi_km
-     * energy_proxy: 10^(1.5 * magnitude) / dist_epi_km clipped at 0.5
-     * soil_amp: 760 / vs30 (use 280 as default if vs30 not in dataset)
-   - FEATURES list
-   - pgv_to_risk_tier(pgv) function returning tier, color, description, building_tips
+Create backend/model.py and backend/train.py:
 
-2. In train.py:
-   - Load dataset, call add_features
-   - Train XGBoost regressor (600 estimators, lr 0.05, max_depth 6)
-   - 80/20 train/test split
-   - Print RMSE and R2
-   - Save model as seismoshield_model.joblib
-   - Pre-compute and save 8 demo scenarios to precomputed_scenarios.json
-     covering M4.0 to M7.5 on Salton Sea fault (33.19, -115.54)
+In model.py:
+- REC_GYM_LAT = 32.8786, REC_GYM_LON = -117.2364
+- Function add_features(df) that computes:
+  * dist_epi_km: haversine distance from epicenter (latitude, longitude) to Rec Gym
+  * log_dist: log1p of dist_epi_km
+  * energy_proxy: 10^(1.5 * mag) / dist_epi_km clipped at 0.5
+  * depth_factor: 1 / log1p(depth)
+  * soil_amp: fixed at 760/280 = 2.714 (Rec Gym Vs30 ~ 280 m/s)
+- FEATURES = ['mag', 'dist_epi_km', 'log_dist', 'energy_proxy', 'depth_factor', 'soil_amp']
+- TARGET = 'pgv'
+- pgv_to_risk_tier(pgv) returning dict with tier, color, description, building_tips
+
+In train.py:
+Step 1 — Build training data from seismos_16_receivers.npy + query.csv:
+  - Load seismos_16_receivers.npy, shape (16, 600, 500)
+  - Extract PGV: pgv_array = np.max(np.abs(arr), axis=1) → shape (16, 500)
+  - Average PGV across all 16 receivers → shape (500,) — one PGV per simulation
+  - Scale PGV to cm/s by multiplying by 100000 (values are in m/s, very small)
+  - Load query.csv, take first 500 rows to match simulation count
+  - Combine: df['pgv'] = pgv_array, df uses latitude/longitude/mag/depth from query.csv
+
+Step 2 — Add features using add_features(df)
+
+Step 3 — Train XGBoost:
+  - 80/20 train/test split
+  - XGBRegressor: n_estimators=600, learning_rate=0.05, max_depth=6, subsample=0.8
+  -
 ```
 
 ---
@@ -558,5 +572,3 @@ Keep it simple. Use Tailwind only. No external UI libraries.
 ---
 
 *SeismoShield — DataHacks @ UCSD — Good luck.*
-
-134

@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
+import { PageHeader } from "@/components/PageHeader";
 import { RiskCard } from "@/components/RiskCard";
 import {
   getDemo,
@@ -134,9 +135,20 @@ export default function ExteriorPage() {
     ) : null;
 
   return (
-    <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-10">
-      <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-2 lg:gap-12 lg:items-start">
-        <div className="min-h-[240px] overflow-hidden rounded-xl border border-white/10 bg-black/30 shadow-lg sm:min-h-[320px] lg:min-h-[420px]">
+    <div className="flex flex-1 flex-col px-4 py-8 sm:px-6 lg:px-10">
+      <div className="mx-auto w-full max-w-6xl flex-1">
+        <PageHeader
+          eyebrow="Building intelligence"
+          title={BUILDING_NAME}
+          description="Street-level view and live demo risk for the Salton Sea scenario. Next: simulator or insurance detail."
+          breadcrumbs={[
+            { href: "/", label: "Home" },
+            { href: "/exterior", label: "Building" },
+          ]}
+        />
+
+        <div className="grid gap-8 lg:grid-cols-2 lg:gap-12 lg:items-start">
+        <div className="group min-h-[240px] overflow-hidden rounded-2xl border border-white/[0.08] bg-black/25 shadow-card ring-1 ring-white/[0.04] transition hover:ring-brand/20 sm:min-h-[320px] lg:min-h-[420px]">
           {streetViewSrc ? (
             <iframe
               title="Street View — UCSD Recreation Center"
@@ -168,11 +180,21 @@ export default function ExteriorPage() {
         </div>
 
         <div className="flex flex-col gap-6">
+          <div className="rounded-xl border border-white/[0.06] bg-surface-raised/40 px-4 py-3 backdrop-blur-sm">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-white/40">
+              Address
+            </p>
+            <p className="mt-1 text-sm text-white/90">{ADDRESS}</p>
+          </div>
+
           <div>
-            <h1 className="text-2xl font-bold text-white sm:text-3xl">
-              {BUILDING_NAME}
-            </h1>
-            <p className="mt-1 text-white/75">{ADDRESS}</p>
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-white/40">
+              Scenario risk
+            </h2>
+            <p className="mt-1 text-xs text-white/50">
+              Data from <code className="rounded bg-white/10 px-1 py-0.5 text-[11px]">GET /demo</code>{" "}
+              (M6.5 Salton Sea)
+            </p>
           </div>
 
           {loading && <RiskCardSkeleton />}
@@ -202,31 +224,45 @@ export default function ExteriorPage() {
             </button>
           </div>
 
-          <p className="text-center text-[11px] text-white/40 sm:text-left">
+          <p className="text-center text-[11px] text-white/35 sm:text-left">
             Powered by Scripps Institution of Oceanography data
           </p>
         </div>
       </div>
 
-      <section className="mx-auto mt-10 max-w-6xl border-t border-white/10 pt-8">
+      <section className="mt-12 border-t border-white/[0.08] pt-10">
+        <h2 className="text-sm font-semibold text-white">Regional map</h2>
+        <p className="mt-1 text-xs text-white/45">
+          2.5D campus context and seismic heatmap (requires Maps API key).
+        </p>
         <button
           type="button"
           onClick={() => setMapOpen((o) => !o)}
-          className="flex w-full items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-left text-sm font-medium text-white transition hover:bg-white/10"
+          className="mt-4 flex w-full items-center justify-between gap-3 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-4 text-left transition hover:border-brand/25 hover:bg-white/[0.06]"
         >
-          <span>View 2.5D Building &amp; Seismic Map</span>
-          <span className="text-white/60">{mapOpen ? "−" : "+"}</span>
+          <span className="text-sm font-medium text-white">
+            {mapOpen ? "Hide" : "Show"} 2.5D building &amp; seismic map
+          </span>
+          <span
+            className={`flex h-8 w-8 items-center justify-center rounded-lg text-lg text-white/70 transition ${
+              mapOpen ? "bg-brand/20 text-brand-bright" : "bg-white/5"
+            }`}
+            aria-hidden
+          >
+            {mapOpen ? "−" : "+"}
+          </span>
         </button>
         {mapOpen && (
-          <div className="mt-4">
+          <div className="mt-4 overflow-hidden rounded-2xl border border-white/[0.06] shadow-card">
             <SeismoMap active={mapOpen} />
           </div>
         )}
       </section>
+      </div>
 
       {insuranceOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 sm:items-center"
+          className="fixed inset-0 z-[90] flex items-end justify-center bg-black/75 p-4 backdrop-blur-sm sm:items-center"
           role="dialog"
           aria-modal="true"
           aria-labelledby="insurance-modal-title"

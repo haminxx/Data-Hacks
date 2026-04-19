@@ -59,7 +59,7 @@ export function RiskCard({
 
   return (
     <article
-      className="flex flex-col rounded-xl border border-white/10 bg-[#0F172A] p-5 shadow-lg"
+      className="flex flex-col rounded-2xl border border-white/[0.08] bg-surface p-5 shadow-card ring-1 ring-white/[0.04]"
       style={{ borderLeftWidth: "4px", borderLeftColor: color }}
     >
       <h2
