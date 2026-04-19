@@ -1,68 +1,78 @@
-import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
-const DEFAULT_ADDRESS =
-  "UCSD Recreation Center, 9500 Gilman Dr, La Jolla, CA 92093";
+import { Globe } from "@/components/Globe";
+
+const FEATURE_PILLS = [
+  { emoji: "🌍", label: "Risk Assessment" },
+  { emoji: "🏗️", label: "3D Simulation" },
+  { emoji: "🚨", label: "Emergency Guidance" },
+];
 
 export default function HomePage() {
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-12 sm:py-16">
-      <div className="landing-pulse-bg pointer-events-none absolute inset-0 flex items-center justify-center">
-        <span className="landing-pulse-ring landing-pulse-ring--1" />
-        <span className="landing-pulse-ring landing-pulse-ring--2" />
-        <span className="landing-pulse-ring landing-pulse-ring--3" />
-        <span className="landing-pulse-ring landing-pulse-ring--4" />
-      </div>
+    <main className="relative min-h-screen overflow-hidden bg-[#0F172A] text-white">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(26,86,219,0.18)_0%,rgba(15,23,42,0)_60%)]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-[320px] bg-[radial-gradient(ellipse_at_top,rgba(26,86,219,0.25)_0%,rgba(15,23,42,0)_70%)]"
+      />
 
-      <div className="relative z-10 flex w-full max-w-xl flex-col items-center text-center">
-        <h1 className="text-4xl font-bold tracking-tight text-[#1A56DB] sm:text-5xl md:text-6xl">
-          SeismoShield
-        </h1>
-        <p className="mt-4 max-w-md text-base leading-relaxed text-white/90 sm:text-lg">
-          We know your building. We know your risk. We get you out safely.
-        </p>
+      <section className="relative mx-auto flex min-h-screen max-w-7xl flex-col-reverse items-center justify-between gap-12 px-6 py-16 md:flex-row md:px-12 md:py-24">
+        <div className="z-10 max-w-xl text-left">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/70 backdrop-blur">
+            <span className="relative inline-flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#1A56DB]/70" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-[#1A56DB]" />
+            </span>
+            Real-time seismic intelligence
+          </div>
 
-        <label htmlFor="building-address" className="sr-only">
-          Building address
-        </label>
-        <input
-          id="building-address"
-          name="address"
-          type="text"
-          defaultValue={DEFAULT_ADDRESS}
-          className="mt-10 w-full rounded-lg border border-white/10 bg-[#0F172A]/80 px-4 py-3 text-left text-sm text-white shadow-inner backdrop-blur-sm placeholder:text-white/40 focus:border-[#1A56DB]/50 focus:outline-none focus:ring-2 focus:ring-[#1A56DB]/30 sm:text-base"
-          autoComplete="street-address"
-        />
+          <h1 className="text-4xl font-semibold leading-tight tracking-tight text-white sm:text-5xl md:text-6xl">
+            Seismo<span className="text-[#1A56DB]">Shield</span>
+          </h1>
+          <p className="mt-4 text-lg leading-relaxed text-white/80 md:text-xl">
+            We know your building. We know your risk. We get you out safely.
+          </p>
+          <p className="mt-3 max-w-md text-sm leading-relaxed text-white/50">
+            AI-driven earthquake risk assessment, 3D building simulation, and
+            step-by-step emergency guidance — powered by Scripps Institution of
+            Oceanography data.
+          </p>
 
-        <Link
-          href="/exterior"
-          className="mt-5 inline-flex w-full items-center justify-center rounded-lg bg-[#1A56DB] px-6 py-3.5 text-base font-semibold text-white shadow-lg transition hover:bg-[#1647b3] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1A56DB] sm:w-auto sm:min-w-[240px]"
-        >
-          Analyze This Building
-        </Link>
+          {/* TODO: wire onClick to globe flyTo + route transition to the 2.5D SanGIS map once it's ready */}
+          <button
+            type="button"
+            className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#1A56DB] px-7 py-3 text-base font-semibold text-white shadow-lg shadow-[#1A56DB]/25 transition hover:bg-[#1647b3] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1A56DB]"
+          >
+            Launch Demo
+            <ArrowRight className="h-4 w-4" />
+          </button>
 
-        <div className="mt-10 flex max-w-md flex-wrap items-center justify-center gap-2 sm:gap-3">
-          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/85 sm:text-sm">
-            🌍 Risk Assessment
-          </span>
-          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/85 sm:text-sm">
-            🏗️ 3D Simulation
-          </span>
-          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/85 sm:text-sm">
-            🚨 Emergency Guidance
-          </span>
+          <div className="mt-8 flex flex-wrap gap-2">
+            {FEATURE_PILLS.map((pill) => (
+              <span
+                key={pill.label}
+                className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/85 backdrop-blur sm:text-sm"
+              >
+                <span aria-hidden>{pill.emoji}</span>
+                {pill.label}
+              </span>
+            ))}
+          </div>
         </div>
 
-        <nav
-          className="relative z-10 mt-12 flex flex-wrap justify-center gap-6 text-xs text-white/45"
-          aria-label="Quick links"
-        >
-          <Link href="/simulator" className="hover:text-white/80">
-            Simulator
-          </Link>
-          <Link href="/emergency" className="hover:text-white/80">
-            Emergency
-          </Link>
-        </nav>
+        <div className="relative h-[320px] w-full max-w-xl md:h-[520px]">
+          <Globe className="absolute -bottom-24 -right-24 scale-125 md:-bottom-32 md:-right-40 md:scale-150" />
+        </div>
+      </section>
+
+      <div className="pointer-events-none absolute bottom-4 left-0 right-0 flex justify-center">
+        <p className="text-[11px] uppercase tracking-[0.18em] text-white/30">
+          DataHacks @ UCSD · SeismoShield
+        </p>
       </div>
     </main>
   );
